@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+
+<simulation>
+
+  <geometry dim="2" sets="true">
+    <raiseorder patch="1" u="1" v="1"/>
+    <refine type="uniform" patch="1" u="7" v="7"/>
+  </geometry>
+
+  <heatequation>
+    <boundaryconditions>
+      <dirichlet set="Boundary" comp="1"/>
+    </boundaryconditions>
+    <source type="expression">
+      ut=x*(1-x)*y*(1-y)*cos(t);
+      uxx=-2*y*(1-y)*sin(t);
+      uyy=-2*x*(1-x)*sin(t);
+      ut-uxx-uyy
+    </source>
+    <anasol type="expression">
+      <primary>x*(1-x)*y*(1-y)*sin(t)</primary>
+      <secondary>(1-2*x)*y*(1-y)*sin(t)|(1-2*y)*x*(1-x)*sin(t)</secondary>
+    </anasol>
+  </heatequation>
+
+  <timestepping start="0.0" end="1.0" dt="0.1" type="be"/>
+
+</simulation>
