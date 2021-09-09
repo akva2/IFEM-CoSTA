@@ -52,5 +52,6 @@ void export_HeatEquation(pybind11::module& m)
   .def("correct", &CoSTAModule<SIMHeatEq>::correct)
   .def("predict", &CoSTAModule<SIMHeatEq>::predict)
   .def("residual", &CoSTAModule<SIMHeatEq>::residual)
+  .def("dirichlet_dofs", &CoSTAModule<SIMHeatEq>::dirichletDofs)
   .def_readonly("ndof", &CoSTAModule<SIMHeatEq>::ndof);
 }
