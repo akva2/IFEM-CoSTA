@@ -1,0 +1,20 @@
+// $Id$
+//==============================================================================
+//!
+//! \file CoSTA.dox
+//!
+//! \date Sep 9 2021
+//!
+//! \author Arne Morten Kvarving / SINTEF
+//!
+//! \brief File containing the Main Page of the IFEM-CoSTA documentation.
+//!
+//==============================================================================
+
+/*! \mainpage IFEM CoSTA simulators.
+
+\author Arne Morten Kvarving, SINTEF Digital, Trondheim
+
+\section intro Introduction
+Blablabla.
+*/

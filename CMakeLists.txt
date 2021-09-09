@@ -50,5 +50,9 @@ target_sources(IFEM_CoSTA PRIVATE CoSTA_AdvectionDiffusion.C
 
 target_link_libraries(IFEM_CoSTA PRIVATE -Wl,--as-needed CommonAD Elasticity ThermoElastic IFEMAppCommon IFEM -Wl,--no-as-needed pybind11::pybind11 Python3::Python)
 
+# For generating the doxy
+set(EXTRA_DOXY_PATHS "${PROJECT_SOURCE_DIR} ${PROJECT_BINARY_DIR}")
+add_doc_target(CoSTA CoSTA)
+
 file(WRITE ${PROJECT_BINARY_DIR}/IFEM_CoSTA/__init__.py "from IFEM_CoSTA.IFEM_CoSTA import *\n")
 
