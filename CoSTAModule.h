@@ -7,7 +7,6 @@
 #include "SIM2D.h"
 #include "SIM3D.h"
 #include "SIMargsBase.h"
-#include "SIMconfigure.h"
 #include "SIMenums.h"
 #include "SIMsolution.h"
 #include "TimeStep.h"
@@ -15,12 +14,19 @@
 #include <memory>
 #include <string>
 
+template<template<class Dim> class Sim>
+struct CoSTASIMAllocator
+{
+  template<class Dim>
+   void allocate(std::unique_ptr<Sim<Dim>>& newModel, SIMbase*& model,
+                 SIMsolution*& solModel, const std::string& infile);
+};
+
 
 template<template<class Dim> class Sim>
 class CoSTAModule {
 public:
-  CoSTAModule(const std::string& infile) :
-    prof("CoSTA-Module")
+  CoSTAModule(const std::string& infile)
   {
     IFEM::Init(0,nullptr,"");
     SIMargsBase preparser("dummy");
@@ -28,11 +34,11 @@ public:
       throw std::runtime_error("Error preparsing input file");
 
     if (preparser.dim == 1)
-      allocate(model1D, infile);
+      allocator.allocate(model1D, model, solModel, infile);
     else if (preparser.dim == 2)
-      allocate(model2D, infile);
+      allocator.allocate(model2D, model, solModel, infile);
     else
-      allocate(model3D,infile);
+      allocator.allocate(model3D, model, solModel, infile);
 
     ndof = model->getNoDOFs();
   }
@@ -43,6 +49,8 @@ public:
     TimeStep tp;
     tp.step = 1;
     tp.time.t = tp.time.dt = mu[0];
+    tp.starTime = 0.0;
+    tp.stopTime = 2.0*mu[0];
     Vector up;
     up = uprev;
     solModel->setSolution(up, 1);
@@ -85,6 +93,8 @@ public:
     TimeStep tp;
     tp.step = 1;
     tp.time.t = tp.time.dt = mu[0];
+    tp.starTime = 0.0;
+    tp.stopTime = 2.0*mu[0];
     Vector up;
     up = uprev;
     solModel->setSolution(up, 1);
@@ -101,18 +111,6 @@ public:
    size_t ndof;
 
 protected:
-   template<class Type>
-   void allocate(std::unique_ptr<Type>& newModel, const std::string& infile)
-   {
-      newModel = std::make_unique<Type>(1);
-      model = newModel.get();
-      solModel = newModel.get();
-      if (ConfigureSIM(*newModel, const_cast<char*>(infile.c_str())))
-        throw std::runtime_error("Error reading input file");
-
-      newModel->initSol();
-   }
-
    void setDiscreteLoad(const std::vector<double>* load)
    {
      if (model1D)
@@ -133,13 +131,12 @@ protected:
        return model3D->solveStep(tp);
    }
 
+   CoSTASIMAllocator<Sim> allocator;
    std::unique_ptr<Sim<SIM1D>> model1D;
    std::unique_ptr<Sim<SIM2D>> model2D;
    std::unique_ptr<Sim<SIM3D>> model3D;
    SIMsolution* solModel;
    SIMbase* model;
-
-   Profiler prof;
 };
 
 #endif

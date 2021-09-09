@@ -5,8 +5,25 @@
 #include "HeatEquation.h"
 #include "SIMHeatEquation.h"
 
+#include "SIMconfigure.h"
+
 
 template<class Dim> using SIMHeatEq = SIMHeatEquation<Dim,HeatEquation>;
+
+
+template<>
+struct CoSTASIMAllocator<SIMHeatEq> {
+   template<class Dim>
+   void allocate(std::unique_ptr<SIMHeatEq<Dim>>& newModel, SIMbase*& model,
+                 SIMsolution*& solModel, const std::string& infile)
+   {
+      newModel = std::make_unique<SIMHeatEq<Dim>>(1);
+      model = newModel.get();
+      solModel = newModel.get();
+      if (ConfigureSIM(*newModel, const_cast<char*>(infile.c_str())))
+        throw std::runtime_error("Error reading input file");
+   }
+};
 
 
 void export_HeatEquation(pybind11::module& m)

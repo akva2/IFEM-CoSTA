@@ -28,19 +28,27 @@ if(NOT EXISTS ${THERMO_DIR})
   set(THERMO_DIR ${PROJECT_SOURCE_DIR}/../ThermoElasticity)
 endif()
 
-include_directories(${IFEM_INCLUDES} ${PROJECT_SOURCE_DIR} ../Common
-                    ${THERMO_DIR}/ThermoElastic ${ELASTICITY_DIR})
+set(AD_DIR ${PROJECT_SOURCE_DIR}/../IFEM-AdvectionDiffusion)
+if(NOT EXISTS ${AD_DIR})
+  set(AD_DIR ${PROJECT_SOURCE_DIR}/../AdvectionDiffusion)
+endif()
 
+include_directories(${IFEM_INCLUDES} ${PROJECT_SOURCE_DIR} ../Common
+                    ${THERMO_DIR}/ThermoElastic ${ELASTICITY_DIR}
+                    ${AD_DIR}/Common/AdvectionDiffusion)
+
+add_subdirectory(${AD_DIR}/Common/AdvectionDiffusion AdvectionDiffusion)
 add_subdirectory(${ELASTICITY_DIR} Elastic)
 add_subdirectory(${THERMO_DIR}/ThermoElastic ThermoElastic)
 
 set(LIBRARY_OUTPUT_PATH IFEM_CoSTA)
 
 pybind11_add_module(IFEM_CoSTA IFEM_CoSTA.C)
-target_sources(IFEM_CoSTA PRIVATE CoSTA_HeatEquation.C
+target_sources(IFEM_CoSTA PRIVATE CoSTA_AdvectionDiffusion.C
+                                  CoSTA_HeatEquation.C
                                   CoSTAModule.h)
 
-target_link_libraries(IFEM_CoSTA PRIVATE -Wl,--as-needed Elasticity ThermoElastic IFEMAppCommon IFEM -Wl,--no-as-needed pybind11::pybind11 Python3::Python)
+target_link_libraries(IFEM_CoSTA PRIVATE -Wl,--as-needed CommonAD Elasticity ThermoElastic IFEMAppCommon IFEM -Wl,--no-as-needed pybind11::pybind11 Python3::Python)
 
 file(WRITE ${PROJECT_BINARY_DIR}/IFEM_CoSTA/__init__.py "from IFEM_CoSTA.IFEM_CoSTA import *\n")
 
