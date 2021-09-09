@@ -12,6 +12,7 @@
 #include "SIMsolution.h"
 #include "TimeStep.h"
 
+#include <memory>
 #include <string>
 
 
@@ -74,7 +75,7 @@ public:
 
     model->extractLoadVec(up);
 
-    return up;
+    return std::move(up);
   }
 
   std::vector<double> correct(const std::vector<double>& mu,

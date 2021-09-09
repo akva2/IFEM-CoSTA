@@ -34,9 +34,13 @@ include_directories(${IFEM_INCLUDES} ${PROJECT_SOURCE_DIR} ../Common
 add_subdirectory(${ELASTICITY_DIR} Elastic)
 add_subdirectory(${THERMO_DIR}/ThermoElastic ThermoElastic)
 
-set(LIBRARY_OUTPUT_PATH CoSTA_HeatEquation)
+set(LIBRARY_OUTPUT_PATH IFEM_CoSTA)
 
-pybind11_add_module(CoSTA_HeatEquation CoSTA-HeatEquation.C)
-target_sources(CoSTA_HeatEquation PRIVATE CoSTAModule.h)
+pybind11_add_module(IFEM_CoSTA IFEM_CoSTA.C)
+target_sources(IFEM_CoSTA PRIVATE CoSTA_HeatEquation.C
+                                  CoSTAModule.h)
 
-target_link_libraries(CoSTA_HeatEquation PRIVATE -Wl,--as-needed Elasticity ThermoElastic IFEMAppCommon IFEM -Wl,--no-as-needed pybind11::pybind11 Python3::Python)
+target_link_libraries(IFEM_CoSTA PRIVATE -Wl,--as-needed Elasticity ThermoElastic IFEMAppCommon IFEM -Wl,--no-as-needed pybind11::pybind11 Python3::Python)
+
+file(WRITE ${PROJECT_BINARY_DIR}/IFEM_CoSTA/__init__.py "from IFEM_CoSTA.IFEM_CoSTA import *\n")
+

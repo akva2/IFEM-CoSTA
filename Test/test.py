@@ -1,6 +1,6 @@
-from CoSTA_HeatEquation import CoSTA_HeatEquation
+import IFEM_CoSTA
 
-test = CoSTA_HeatEquation.CoSTA_HeatEquation('Square-heat.xinp')
+test = IFEM_CoSTA.HeatEquation('Square-heat.xinp')
 
 mu = [1.0]
 uprev = [1.0]*test.ndof
@@ -10,3 +10,5 @@ print(upred)
 
 sigma = test.residual(mu, uprev, upred)
 print(sigma)
+
+test.correct(mu, uprev, sigma)
