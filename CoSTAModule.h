@@ -16,6 +16,7 @@
 
 #include "IFEM.h"
 #include "Profiler.h"
+#include "SAM.h"
 #include "SIM1D.h"
 #include "SIM2D.h"
 #include "SIM3D.h"
@@ -146,6 +147,24 @@ public:
       throw std::runtime_error("Failure during correction step");
 
     return solModel->getSolution(0);
+  }
+
+  //! \brief Get the IDs of all Dirichlet DoFs.
+  std::vector<int> dirichletDofs()
+  {
+    size_t nNodes = model->getNoNodes();
+    std::vector<int> eqns, ret;
+
+    for (size_t inode = 1; inode <= nNodes; inode++) {
+      model->getSAM()->getNodeEqns(eqns, inode);
+      auto first_dof = model->getSAM()->getNodeDOFs(inode).first;
+      for (size_t i = 0; i < eqns.size(); i++) {
+        if (eqns[i] <= 0)
+          ret.push_back(first_dof + i);
+      }
+    }
+
+    return ret;
   }
 
   size_t ndof; //!< Number of degrees of freedom in simulator

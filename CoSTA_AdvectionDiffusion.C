@@ -55,5 +55,6 @@ void export_AdvectionDiffusion(pybind11::module& m)
   .def("correct", &CoSTAModule<SIMAdv>::correct)
   .def("predict", &CoSTAModule<SIMAdv>::predict)
   .def("residual", &CoSTAModule<SIMAdv>::residual)
+  .def("dirichlet_dofs", &CoSTAModule<SIMAdv>::dirichletDofs)
   .def_readonly("ndof", &CoSTAModule<SIMAdv>::ndof);
 }
