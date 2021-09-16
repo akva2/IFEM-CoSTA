@@ -13,6 +13,8 @@ if(NOT IFEM_CONFIGURED)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${IFEM_CXX_FLAGS}")
 endif()
 
+set(CMAKE_CXX_STANDARD 17)
+
 find_package(Python3 COMPONENTS Development)
 find_package(pybind11 REQUIRED)
 
