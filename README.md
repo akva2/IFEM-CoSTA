@@ -17,6 +17,7 @@ the applications and typing
     git clone https://github.com/OPM/IFEM-Elasticity
     git clone https://github.com/OPM/IFEM-ThermoElasticity
     git clone https://github.com/OPM/IFEM-AdvectionDiffusion
+    git clone https://github.com/OPM/IFEM-Darcy
 
 The source code for this module should be placed alongside the others.
 The build system uses sibling directory logic to locate the

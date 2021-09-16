@@ -33,3 +33,20 @@ print(ucorr)
 
 dofs = test2.dirichlet_dofs()
 print(dofs)
+
+test3 = IFEM_CoSTA.Darcy('DarcySquare.xinp')
+
+mu = {'dt' : 1.0}
+uprev = [1.0]*test3.ndof
+
+upred = test3.predict(mu, uprev)
+print(upred)
+
+sigma = test3.residual(mu, uprev, upred)
+print(sigma)
+
+ucorr = test3.correct(mu, uprev, sigma)
+print(ucorr)
+
+dofs = test3.dirichlet_dofs()
+print(dofs)

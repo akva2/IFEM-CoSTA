@@ -11,16 +11,17 @@
 //!
 //==============================================================================
 
+#include "Profiler.h"
+
 #include <pybind11/numpy.h>
 #include <pybind11/stl.h>
-
-#include "CoSTAModule.h"
-#include "HeatEquation.h"
-#include "SIMHeatEquation.h"
 
 
 //! \brief Exports the AdvectionDiffusion CoSTA module.
 void export_AdvectionDiffusion(pybind11::module& m);
+
+//! \brief Exports the Darcy CoSTA module.
+void export_Darcy(pybind11::module& m);
 
 //! \brief Exports the AdvectionDiffusion CoSTA module.
 void export_HeatEquation(pybind11::module& m);
@@ -33,5 +34,6 @@ Profiler prof("CoSTA-Module"); //!< Global instance of profiler
 PYBIND11_MODULE(IFEM_CoSTA, m)
 {
   export_AdvectionDiffusion(m);
+  export_Darcy(m);
   export_HeatEquation(m);
 }
