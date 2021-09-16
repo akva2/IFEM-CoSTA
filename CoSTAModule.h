@@ -23,6 +23,7 @@
 #include "SIMargsBase.h"
 #include "SIMenums.h"
 #include "SIMsolution.h"
+#include "SystemMatrix.h"
 #include "TimeStep.h"
 
 #include <memory>
@@ -47,6 +48,48 @@ struct CoSTASIMAllocator
    void allocate(std::unique_ptr<Sim<Dim>>& newModel, SIMbase*& model,
                  SIMsolution*& solModel, const std::string& infile);
 };
+
+
+/*!
+ \brief Helper class to add CoSTA needs to a simulator.
+*/
+
+class CoSTASIMHelper
+{
+public:
+  //! \brief Set an additional discrete load.
+  //! \param vec Load to use (nullptr for none)
+  void setDiscreteLoad(const std::vector<double>* vec)
+  {
+    discreteLoad = vec;
+  }
+
+protected:
+  //! \brief Assembles the discrete load.
+  //! \param nDofs Number of degrees of freedom
+  //! \param sam The SAM object to use
+  //! \param v The vector to assemble to
+  bool assembleDiscreteLoad(size_t nDofs, const SAM* sam, SystemVector* v)
+  {
+    if (!discreteLoad)
+      return true;
+
+    if (discreteLoad->size() != nDofs)
+      return false;
+
+    for (size_t i = 1; i <= nDofs; ++i) {
+      int eq = sam->getEquation(i, 1);
+      if (eq != 0)
+        v->getPtr()[eq-1] += (*discreteLoad)[i-1];
+    }
+
+    return true;
+  }
+
+
+  const std::vector<double>* discreteLoad = nullptr; //!< Additional discrete load vector
+};
+
 
 /*!
  \brief Class adding a CoSTA interface to a simulator.
