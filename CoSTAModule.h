@@ -27,6 +27,7 @@
 
 #include <memory>
 #include <string>
+#include <variant>
 
 
 /*!
@@ -54,6 +55,8 @@ struct CoSTASIMAllocator
 template<template<class Dim> class Sim>
 class CoSTAModule {
 public:
+  using ParameterMap = std::map<std::string, std::variant<double,std::vector<double>>>; //!< Map for parameters
+
   //! \brief Constructor.
   //! \param infile Input file to parse
   CoSTAModule(const std::string& infile)
@@ -76,14 +79,16 @@ public:
   //! \brief Perform a prediction step in a CoSTA loop.
   //! \param mu Model parameters
   //! \param uprev State to make a time-step from
-  std::vector<double> predict(const std::vector<double>& mu,
+  std::vector<double> predict(const ParameterMap& mu,
                               const std::vector<double>& uprev)
   {
+    double dt = this->getScalarParameter(mu, "dt");
+
     TimeStep tp;
     tp.step = 1;
-    tp.time.t = tp.time.dt = mu[0];
+    tp.time.t = tp.time.dt = dt;
     tp.starTime = 0.0;
-    tp.stopTime = 2.0*mu[0];
+    tp.stopTime = 2.0*dt;
     Vector up;
     up = uprev;
     solModel->setSolution(up, 1);
@@ -100,12 +105,14 @@ public:
   //! \param mu Model parameters
   //! \param uprev State to make a time-step from
   //! \param unext State to calculate residual for
-  std::vector<double> residual(const std::vector<double>& mu,
+  std::vector<double> residual(const ParameterMap& mu,
                                const std::vector<double>& uprev,
                                const std::vector<double>& unext)
   {
+    double dt = this->getScalarParameter(mu, "dt");
+
     TimeDomain time;
-    time.t = time.dt = mu[0];
+    time.t = time.dt = dt;
     Vector up;
     up = uprev;
     solModel->setSolution(up, 1);
@@ -127,15 +134,17 @@ public:
   //! \param mu Model parameters
   //! \param uprev State to make a time-step from
   //! \param sigma Right-hand-side correction to use
-  std::vector<double> correct(const std::vector<double>& mu,
+  std::vector<double> correct(const ParameterMap& mu,
                               const std::vector<double>& uprev,
                               const std::vector<double>& sigma)
   {
+    double dt = this->getScalarParameter(mu, "dt");
+
     TimeStep tp;
     tp.step = 1;
-    tp.time.t = tp.time.dt = mu[0];
+    tp.time.t = tp.time.dt = dt;
     tp.starTime = 0.0;
-    tp.stopTime = 2.0*mu[0];
+    tp.stopTime = 2.0*dt;
     Vector up;
     up = uprev;
     solModel->setSolution(up, 1);
@@ -170,6 +179,19 @@ public:
   size_t ndof; //!< Number of degrees of freedom in simulator
 
 protected:
+  //! \brief Get a scalar parameter from map.
+  //! \param map Map with parameters
+  //! \param key Name of parameter
+  double getScalarParameter(const ParameterMap& map, const std::string& key)
+  {
+    const auto it = map.find(key);
+    if (it == map.end())
+      throw std::runtime_error("Need "+key+" in parameters");
+    if (!std::holds_alternative<double>(it->second))
+      throw std::runtime_error(key+" needs to be a double");
+    return std::get<double>(it->second);
+  }
+
   //! \brief Helper function to provide RHS correction to simulator.
   //! \param load The RHS correction to provide to simulator
   void setDiscreteLoad(const std::vector<double>* load)
