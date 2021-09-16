@@ -1,0 +1,21 @@
+#!/usr/bin/env python
+
+from __future__ import print_function
+from setuptools import setup
+from distutils.extension import Extension
+
+import sys
+
+if sys.version_info < (3,4):
+    print('Python 3.4 is required', file=sys.stderr)
+    sys.exit(1)
+
+setup(
+    name='IFEM_CoSTA',
+    version='1.0.0',
+    description='CoSTA simulators written using IFEM',
+    maintainer='Arne Morten Kvarving',
+    maintainer_email='arne.morten.kvarving@sintef.no',
+    packages=['IFEM_CoSTA'],
+    package_data={'IFEM_CoSTA':['$<TARGET_FILE_NAME:IFEM_CoSTA>']}
+)

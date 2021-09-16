@@ -2,6 +2,8 @@ project(CoSTA)
 
 cmake_minimum_required(VERSION 2.6)
 
+set(IFEM_INSTALL_DOXY 0)
+
 # Add local modules
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}
                       ${PROJECT_SOURCE_DIR}/../../cmake/Modules)
@@ -57,4 +59,7 @@ set(EXTRA_DOXY_PATHS "${PROJECT_SOURCE_DIR} ${PROJECT_BINARY_DIR}")
 add_doc_target(CoSTA CoSTA)
 
 file(WRITE ${PROJECT_BINARY_DIR}/IFEM_CoSTA/__init__.py "from IFEM_CoSTA.IFEM_CoSTA import *\n")
+file(GENERATE OUTPUT ${PROJECT_BINARY_DIR}/setup.py
+     INPUT ${PROJECT_SOURCE_DIR}/setup.py.in)
 
+install(CODE "message(\"Please use pip to install the package from build directory\")")
