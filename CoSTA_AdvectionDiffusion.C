@@ -109,11 +109,5 @@ struct CoSTASIMAllocator<SIMADCoSTA> {
 
 void export_AdvectionDiffusion(pybind11::module& m)
 {
-  pybind11::class_<CoSTAModule<SIMADCoSTA>>(m, "AdvectionDiffusion")
-  .def(pybind11::init<const std::string&>())
-  .def("correct", &CoSTAModule<SIMADCoSTA>::correct)
-  .def("predict", &CoSTAModule<SIMADCoSTA>::predict)
-  .def("residual", &CoSTAModule<SIMADCoSTA>::residual)
-  .def("dirichlet_dofs", &CoSTAModule<SIMADCoSTA>::dirichletDofs)
-  .def_readonly("ndof", &CoSTAModule<SIMADCoSTA>::ndof);
+  CoSTAModule<SIMADCoSTA>::pyExport(m, "AdvectionDiffusion");
 }

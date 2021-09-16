@@ -109,11 +109,5 @@ struct CoSTASIMAllocator<SIMHeatCoSTA> {
 
 void export_HeatEquation(pybind11::module& m)
 {
-  pybind11::class_<CoSTAModule<SIMHeatCoSTA>>(m, "HeatEquation")
-  .def(pybind11::init<const std::string&>())
-  .def("correct", &CoSTAModule<SIMHeatCoSTA>::correct)
-  .def("predict", &CoSTAModule<SIMHeatCoSTA>::predict)
-  .def("residual", &CoSTAModule<SIMHeatCoSTA>::residual)
-  .def("dirichlet_dofs", &CoSTAModule<SIMHeatCoSTA>::dirichletDofs)
-  .def_readonly("ndof", &CoSTAModule<SIMHeatCoSTA>::ndof);
+  CoSTAModule<SIMHeatCoSTA>::pyExport(m, "HeatEquation");
 }

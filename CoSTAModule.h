@@ -221,6 +221,20 @@ public:
 
   size_t ndof; //!< Number of degrees of freedom in simulator
 
+  //! \brief Static helper to export to python.
+  //! \param m Module to export to
+  //! \param name Name of python class
+  static void pyExport(pybind11::module& m, const char* name)
+  {
+    pybind11::class_<CoSTAModule<Sim>>(m, name)
+        .def(pybind11::init<const std::string&>())
+        .def("correct", &CoSTAModule<Sim>::correct)
+        .def("predict", &CoSTAModule<Sim>::predict)
+        .def("residual", &CoSTAModule<Sim>::residual)
+        .def("dirichlet_dofs", &CoSTAModule<Sim>::dirichletDofs)
+        .def_readonly("ndof", &CoSTAModule<Sim>::ndof);
+  }
+
 protected:
   //! \brief Get a scalar parameter from map.
   //! \param map Map with parameters
