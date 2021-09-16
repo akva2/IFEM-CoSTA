@@ -37,11 +37,18 @@ if(NOT EXISTS ${AD_DIR})
   set(AD_DIR ${PROJECT_SOURCE_DIR}/../AdvectionDiffusion)
 endif()
 
+set(DARCY_DIR ${PROJECT_SOURCE_DIR}/../IFEM-Darcy)
+if(NOT EXISTS ${DARCY_DIR})
+  set(DARCY_DIR ${PROJECT_SOURCE_DIR}/../Darcy)
+endif()
+
 include_directories(${IFEM_INCLUDES} ${PROJECT_SOURCE_DIR} ../Common
                     ${THERMO_DIR}/ThermoElastic ${ELASTICITY_DIR}
-                    ${AD_DIR}/Common/AdvectionDiffusion)
+                    ${AD_DIR}/Common/AdvectionDiffusion
+                    ${DARCY_DIR}/Common/Darcy)
 
 add_subdirectory(${AD_DIR}/Common/AdvectionDiffusion AdvectionDiffusion)
+add_subdirectory(${DARCY_DIR}/Common/Darcy Darcy)
 add_subdirectory(${ELASTICITY_DIR} Elastic)
 add_subdirectory(${THERMO_DIR}/ThermoElastic ThermoElastic)
 
@@ -49,10 +56,11 @@ set(LIBRARY_OUTPUT_PATH IFEM_CoSTA)
 
 pybind11_add_module(IFEM_CoSTA IFEM_CoSTA.C)
 target_sources(IFEM_CoSTA PRIVATE CoSTA_AdvectionDiffusion.C
+                                  CoSTA_Darcy.C
                                   CoSTA_HeatEquation.C
                                   CoSTAModule.h)
 
-target_link_libraries(IFEM_CoSTA PRIVATE -Wl,--as-needed CommonAD Elasticity ThermoElastic IFEMAppCommon IFEM -Wl,--no-as-needed pybind11::pybind11 Python3::Python)
+target_link_libraries(IFEM_CoSTA PRIVATE -Wl,--as-needed CommonDarcy CommonAD Elasticity ThermoElastic IFEMAppCommon IFEM -Wl,--no-as-needed pybind11::pybind11 Python3::Python)
 
 # For generating the doxy
 set(EXTRA_DOXY_PATHS "${PROJECT_SOURCE_DIR} ${PROJECT_BINARY_DIR}")

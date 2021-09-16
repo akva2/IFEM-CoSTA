@@ -1,13 +1,13 @@
 // $Id$
 //==============================================================================
 //!
-//! \file CoSTA_AdvectionDiffusion.C
+//! \file CoSTA_Darcy.C
 //!
 //! \date Sep 9 2021
 //!
 //! \author Arne Morten Kvarving / SINTEF
 //!
-//! \brief Exports the AdvectionDiffusion solver to the IFEM_CoSTA module.
+//! \brief Exports the Darcy solver to the IFEM_CoSTA module.
 //!
 //==============================================================================
 
@@ -15,29 +15,29 @@
 #include <pybind11/stl.h>
 
 #include "CoSTAModule.h"
+#include "SIMDarcy.h"
 
 #include "AlgEqSystem.h"
+#include "ElmMats.h"
+#include "SIMconfigure.h"
 #include "SystemMatrix.h"
-
-#include "AdvectionDiffusionBDF.h"
-#include "SIMAD.h"
 
 
 /*!
- \brief Integrand for AdvectionDiffusion with CoSTA additions.
+ \brief Integrand for Darcy with CoSTA additions.
 */
 
-class AdvectionDiffusionCoSTA : public AdvectionDiffusionBDF
+class DarcyCoSTA : public Darcy
 {
 public:
   //! \brief The default constructor initializes all pointers to zero.
   //! \param[in] n Number of spatial dimensions
-  AdvectionDiffusionCoSTA(unsigned short int n) :
-    AdvectionDiffusionBDF(n, TimeIntegration::BE)
+  DarcyCoSTA(unsigned short int n) :
+    Darcy(n, 1)
   {
   }
 
-  using AdvectionDiffusionBDF::finalizeElement;
+  using Darcy::finalizeElement;
   //! \brief Finalizes the element quantities after the numerical integration.
   //! \details This method is invoked once for each element, after the numerical
   //! integration loop over interior points is finished and before the resulting
@@ -56,18 +56,18 @@ public:
 
 
 /*!
- \brief CoSTA simulator for AdvectionDiffusion.
+ \brief CoSTA simulator for Darcy.
 */
 
 template<class Dim>
-class SIMADCoSTA : public SIMAD<Dim,AdvectionDiffusionBDF>,
-                   public CoSTASIMHelper
+class SIMDarcyCoSTA : public SIMDarcy<Dim>,
+                      public CoSTASIMHelper
 {
 public:
-  //! \brief Constructor
-  //! \param ad The integrand to use
-  SIMADCoSTA(AdvectionDiffusionCoSTA& ad) :
-    SIMAD<Dim,AdvectionDiffusionBDF>(ad,true)
+  //! \brief Constructor.
+  //! \param integrand Reference to integrand to use
+  SIMDarcyCoSTA(DarcyCoSTA& integrand) :
+    SIMDarcy<Dim>(integrand)
   {
   }
 
@@ -77,38 +77,38 @@ protected:
                              const TimeDomain&) override
   {
     return this->assembleDiscreteLoad(this->getNoDOFs(),
-                                      Dim::mySam,
-                                      Dim::myEqSys->getVector(0));
+                                      this->mySam,
+                                      this->myEqSys->getVector(0));
   }
 };
 
 
-//! \brief Specialization for SIMADCoSTA.
+//! \brief Specialization for SIMDarcy.
 template<>
-struct CoSTASIMAllocator<SIMADCoSTA> {
-  //! \brief Method to allocate a given dimensionality of a SIMAdv.
+struct CoSTASIMAllocator<SIMDarcyCoSTA> {
+  //! \brief Method to allocate a given dimensionality of a SIMHeatEq.
   //! \param newModel Simulator to allocate
   //! \param model Pointer to SIMbase interface for simulator
-  //! \param solModel Pointer to SIMsolution interface for simulatorA
+  //! \param solModel Pointer to SIMsolution interface for simulator
   //! \param infile Input file to parse.
   template<class Dim>
-  void allocate(std::unique_ptr<SIMADCoSTA<Dim>>& newModel, SIMbase*& model,
+  void allocate(std::unique_ptr<SIMDarcyCoSTA<Dim>>& newModel, SIMbase*& model,
                 SIMsolution*& solModel, const std::string& infile)
   {
-    integrand = std::make_unique<AdvectionDiffusionCoSTA>(Dim::dimension);
-    newModel = std::make_unique<SIMADCoSTA<Dim>>(*integrand);
+    integrand = std::make_unique<DarcyCoSTA>(Dim::dimension);
+    newModel = std::make_unique<SIMDarcyCoSTA<Dim>>(*integrand);
     model = newModel.get();
     solModel = newModel.get();
-    if (ConfigureSIM(static_cast<SIMAD<Dim,AdvectionDiffusionBDF>&>(*newModel),
+    if (ConfigureSIM(static_cast<SIMDarcy<Dim>&>(*newModel),
                      const_cast<char*>(infile.c_str())))
       throw std::runtime_error("Error reading input file");
   }
 
-   std::unique_ptr<AdvectionDiffusionCoSTA> integrand; //!< Pointer to integrand instance
+  std::unique_ptr<DarcyCoSTA> integrand; //!< Pointer to integrand instance
 };
 
 
-void export_AdvectionDiffusion(pybind11::module& m)
+void export_Darcy(pybind11::module& m)
 {
-  CoSTAModule<SIMADCoSTA>::pyExport(m, "AdvectionDiffusion");
+  CoSTAModule<SIMDarcyCoSTA>::pyExport(m, "Darcy");
 }
