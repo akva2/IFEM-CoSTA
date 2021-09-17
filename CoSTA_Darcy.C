@@ -71,6 +71,9 @@ public:
   {
   }
 
+  //! \brief Currently unused.
+  void setParam(const std::string&, double) {}
+
 protected:
   //! \brief Assembles problem-dependent discrete terms, if any.
   bool assembleDiscreteTerms(const IntegrandBase*,

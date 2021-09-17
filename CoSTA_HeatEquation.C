@@ -21,6 +21,8 @@
 
 #include "AlgEqSystem.h"
 #include "ElmMats.h"
+#include "ExprFunctions.h"
+#include "Functions.h"
 #include "SIMconfigure.h"
 #include "SystemMatrix.h"
 
@@ -55,6 +57,19 @@ public:
 
     return true;
   }
+
+  //! \brief Set a parameter in the source and flux functions.
+  //! \param name Name of parameter
+  //! \param value Value of parameter
+  void setParam(const std::string& name, double value)
+  {
+    EvalFunction* f = dynamic_cast<EvalFunction*>(sourceTerm);
+    if (f)
+      f->setParam(name, value);
+    f = dynamic_cast<EvalFunction*>(flux);
+    if (f)
+      f->setParam(name, value);
+  }
 };
 
 
@@ -73,6 +88,62 @@ public:
   {
   }
 
+  //! \brief Set a parameter in relevant functions.
+  //! \param name Name of parameter
+  //! \param value Value of parameter
+  void setParam(const std::string& name, double value)
+  {
+    this->heq.setParam(name, value);
+    if (this->mySol) {
+      EvalFunction* f = dynamic_cast<EvalFunction*>(this->mySol->getScalarSol());
+      if (f)
+        f->setParam(name, value);
+      VecFuncExpr* v = dynamic_cast<VecFuncExpr*>(this->mySol->getScalarSecSol());
+      if (v)
+        v->setParam(name, value);
+      for (auto& it : this->myScalars) {
+        EvalFunction* f = dynamic_cast<EvalFunction*>(it.second);
+        if (f)
+          f->setParam(name, value);
+      }
+      for (auto& it : this->myScalars) {
+        VecFuncExpr* f = dynamic_cast<VecFuncExpr*>(it.second);
+        if (f)
+          f->setParam(name, value);
+      }
+    }
+    if (ICf.empty() && !this->myICs.empty())
+      for (const auto& it : this->myICs)
+        if (it.first == "nofile")
+          for (const auto& ic : it.second) {
+            RealFunc* f = utl::parseRealFunc(ic.function,ic.file_field,false);
+            ICf[ic.sim_field] = std::unique_ptr<RealFunc>(f);
+          }
+    for (auto& it : ICf) {
+      EvalFunction* f = dynamic_cast<EvalFunction*>(it.second.get());
+      if (f)
+        f->setParam(name, value);
+    }
+  }
+
+  //! \brief Sets initial conditions.
+  //! \details This has been overridden here so that the functions are not local
+  //!          but live during the entire lifetime of the class. This in order to handle
+  //!          parameter dependencies.
+  void setInitialConditions()
+  {
+    for (const auto& it : this->myICs)
+      if (it.first == "nofile")
+        for (const auto& ic : it.second)
+        {
+          // Do we have this field?
+          Vector* field = this->getField(ic.sim_field);
+          if (!field) continue;
+          this->project(*field,ICf[ic.sim_field].get(),ic.basis,ic.component-1,
+                        this->getNoFields(ic.basis));
+        }
+  }
+
 protected:
   //! \brief Assembles problem-dependent discrete terms, if any.
   bool assembleDiscreteTerms(const IntegrandBase*,
@@ -82,6 +153,8 @@ protected:
                                       this->mySam,
                                       this->myEqSys->getVector(0));
   }
+
+  std::map<std::string,std::unique_ptr<RealFunc>> ICf; //!< Initial condition functions
 };
 
 
