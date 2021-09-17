@@ -15,6 +15,7 @@
 #define COSTA_MODULE_H_
 
 #include "IFEM.h"
+#include "IntegrandBase.h"
 #include "Profiler.h"
 #include "SAM.h"
 #include "SIM1D.h"
@@ -86,7 +87,6 @@ protected:
     return true;
   }
 
-
   const std::vector<double>* discreteLoad = nullptr; //!< Additional discrete load vector
 };
 
@@ -126,16 +126,22 @@ public:
                               const std::vector<double>& uprev)
   {
     double dt = this->getScalarParameter(mu, "dt");
+    double t = dt;
+    if (mu.find("t") != mu.end())
+      t = this->getScalarParameter(mu, "t");
 
     TimeStep tp;
     tp.step = 1;
-    tp.time.t = tp.time.dt = dt;
+    tp.time.t = t;
+    tp.time.dt = dt;
     tp.starTime = 0.0;
-    tp.stopTime = 2.0*dt;
+    tp.stopTime = t+2*dt;
     Vector up;
     up = uprev;
     solModel->setSolution(up, 1);
     model->setMode(SIM::DYNAMIC);
+    this->setParameters(mu);
+
     Vector dummy;
     model->updateDirichlet(tp.time.t, &dummy);
     if (!this->solveStep(tp))
@@ -153,9 +159,13 @@ public:
                                const std::vector<double>& unext)
   {
     double dt = this->getScalarParameter(mu, "dt");
+    double t = dt;
+    if (mu.find("t") != mu.end())
+      t = this->getScalarParameter(mu, "t");
 
     TimeDomain time;
-    time.t = time.dt = dt;
+    time.t = t;
+    time.dt = dt;
     Vector up;
     up = uprev;
     solModel->setSolution(up, 1);
@@ -163,6 +173,7 @@ public:
     solModel->setSolution(up, 0);
     model->setMode(SIM::RHS_ONLY);
     this->setDiscreteLoad(nullptr);
+    this->setParameters(mu);
     model->updateDirichlet(time.t, nullptr);
 
     if (!model->assembleSystem(time, solModel->getSolutions()))
@@ -182,17 +193,23 @@ public:
                               const std::vector<double>& sigma)
   {
     double dt = this->getScalarParameter(mu, "dt");
+    double t = dt;
+    if (mu.find("t") != mu.end())
+      t = this->getScalarParameter(mu, "t");
 
     TimeStep tp;
     tp.step = 1;
-    tp.time.t = tp.time.dt = dt;
+    tp.time.t = t;
+    tp.time.dt = dt;
     tp.starTime = 0.0;
-    tp.stopTime = 2.0*dt;
+    tp.stopTime = t+2*dt;
     Vector up;
     up = uprev;
     solModel->setSolution(up, 1);
     model->setMode(SIM::DYNAMIC);
     this->setDiscreteLoad(&sigma);
+    this->setParameters(mu);
+
     Vector dummy;
     model->updateDirichlet(tp.time.t,&dummy);
     if (!this->solveStep(tp))
@@ -219,6 +236,35 @@ public:
     return ret;
   }
 
+  //! \brief Calculate solution norms.
+  //! \param mu Map of parameters
+  //! \param ucorr Solution to calculate norms for
+  std::map<std::string, double> norms(const ParameterMap& mu,
+                                      const std::vector<double>& ucurr)
+  {
+    double dt = this->getScalarParameter(mu, "dt");
+    double t = dt;
+    if (mu.find("t") != mu.end())
+      t = this->getScalarParameter(mu, "t");
+    Vector up;
+    up = ucurr;
+    solModel->setSolution(up, 0);
+
+    TimeDomain time;
+    time.t = t;
+    time.dt = dt;
+    Vectors gNorm;
+    if (!model->solutionNorms(time,solModel->getSolutions(),Vectors(),gNorm))
+      throw std::runtime_error("Error calculating norms.");
+
+    std::map<std::string, double> result;
+    NormBase* nrm = model->getNormIntegrand();
+    for (size_t i = 1; i <= nrm->getNoFields(1); ++i)
+      result.insert(std::make_pair(nrm->getName(1,i), gNorm[0](i)));
+
+    return result;
+  }
+
   size_t ndof; //!< Number of degrees of freedom in simulator
 
   //! \brief Static helper to export to python.
@@ -232,6 +278,7 @@ public:
         .def("predict", &CoSTAModule<Sim>::predict)
         .def("residual", &CoSTAModule<Sim>::residual)
         .def("dirichlet_dofs", &CoSTAModule<Sim>::dirichletDofs)
+        .def("norms", &CoSTAModule<Sim>::norms)
         .def_readonly("ndof", &CoSTAModule<Sim>::ndof);
   }
 
@@ -247,6 +294,30 @@ protected:
     if (!std::holds_alternative<double>(it->second))
       throw std::runtime_error(key+" needs to be a double");
     return std::get<double>(it->second);
+  }
+
+  //! \brief Helper function to set a parameter in simulator.
+  //! \param name Name of parameter
+  //! \param value Value of parameter
+  void setParam(const std::string& name, double value)
+  {
+    if (model1D)
+      model1D->setParam(name, value);
+    else if (model2D)
+      model2D->setParam(name, value);
+    else
+      model3D->setParam(name, value);
+  }
+
+  //! \brief Set parameters from map in simulator.
+  //! \param map Map of parameters
+  void setParameters(const ParameterMap& map)
+  {
+    static const std::vector<std::string> blackList = {"dt", "t"};
+    for (const auto& entry : map)
+      if (std::holds_alternative<double>(entry.second))
+        if (std::find(blackList.begin(), blackList.end(), entry.first) == blackList.end())
+          this->setParam(entry.first, std::get<double>(entry.second));
   }
 
   //! \brief Helper function to provide RHS correction to simulator.

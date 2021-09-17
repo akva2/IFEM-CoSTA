@@ -15,11 +15,11 @@
       ut=x*(1-x)*y*(1-y)*cos(t);
       uxx=-2*y*(1-y)*sin(t);
       uyy=-2*x*(1-x)*sin(t);
-      ut-uxx-uyy
+      (ut-uxx-uyy)*alpha
     </source>
     <anasol type="expression">
-      <primary>x*(1-x)*y*(1-y)*sin(t)</primary>
-      <secondary>(1-2*x)*y*(1-y)*sin(t)|(1-2*y)*x*(1-x)*sin(t)</secondary>
+      <primary>alpha*x*(1-x)*y*(1-y)*sin(t)</primary>
+      <secondary>alpha*(1-2*x)*y*(1-y)*sin(t)|alpha*(1-2*y)*x*(1-x)*sin(t)</secondary>
     </anasol>
   </heatequation>
 
