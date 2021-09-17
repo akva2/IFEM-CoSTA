@@ -17,6 +17,7 @@
 #include "CoSTAModule.h"
 
 #include "AlgEqSystem.h"
+#include "ExprFunctions.h"
 #include "SystemMatrix.h"
 
 #include "AdvectionDiffusionBDF.h"
@@ -70,6 +71,9 @@ public:
     SIMAD<Dim,AdvectionDiffusionBDF>(ad,true)
   {
   }
+
+  //! \brief Currently unused.
+  void setParam(const std::string&, double) {}
 
 protected:
   //! \brief Assembles problem-dependent discrete terms, if any.

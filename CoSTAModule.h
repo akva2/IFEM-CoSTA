@@ -86,7 +86,6 @@ protected:
     return true;
   }
 
-
   const std::vector<double>* discreteLoad = nullptr; //!< Additional discrete load vector
 };
 
@@ -136,6 +135,7 @@ public:
     solModel->setSolution(up, 1);
     model->setMode(SIM::DYNAMIC);
     this->setDiscreteLoad(nullptr);
+    this->setParameters(mu);
 
     Vector dummy;
     model->updateDirichlet(tp.time.t, &dummy);
@@ -163,6 +163,7 @@ public:
     solModel->setSolution(up, 0);
     model->setMode(SIM::RHS_ONLY);
     this->setDiscreteLoad(nullptr);
+    this->setParameters(mu);
     model->updateDirichlet(time.t, nullptr);
 
     if (!model->assembleSystem(time, solModel->getSolutions()))
@@ -192,6 +193,7 @@ public:
     solModel->setSolution(up, 1);
     model->setMode(SIM::DYNAMIC);
     this->setDiscreteLoad(&sigma);
+    this->setParameters(mu);
 
     Vector dummy;
     model->updateDirichlet(tp.time.t,&dummy);
@@ -220,8 +222,9 @@ public:
   }
 
   //! \brief Returns initial condition for solution.
-  std::vector<double> initialCondition()
+  std::vector<double> initialCondition(const ParameterMap& mu)
   {
+    this->setParameters(mu);
     if (model1D)
       model1D->setInitialConditions();
     else if (model2D)
@@ -261,6 +264,30 @@ protected:
     if (!std::holds_alternative<double>(it->second))
       throw std::runtime_error(key+" needs to be a double");
     return std::get<double>(it->second);
+  }
+
+  //! \brief Helper function to set a parameter in simulator.
+  //! \param name Name of parameter
+  //! \param value Value of parameter
+  void setParam(const std::string& name, double value)
+  {
+    if (model1D)
+      model1D->setParam(name, value);
+    else if (model2D)
+      model2D->setParam(name, value);
+    else
+      model3D->setParam(name, value);
+  }
+
+  //! \brief Set parameters from map in simulator.
+  //! \param map Map of parameters
+  void setParameters(const ParameterMap& map)
+  {
+    static const std::vector<std::string> blackList = {"dt", "t"};
+    for (const auto& entry : map)
+      if (std::holds_alternative<double>(entry.second))
+        if (std::find(blackList.begin(), blackList.end(), entry.first) == blackList.end())
+          this->setParam(entry.first, std::get<double>(entry.second));
   }
 
   //! \brief Helper function to provide RHS correction to simulator.
