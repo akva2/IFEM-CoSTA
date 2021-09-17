@@ -21,6 +21,7 @@
 
 #include "AlgEqSystem.h"
 #include "ElmMats.h"
+#include "ExprFunctions.h"
 #include "SIMconfigure.h"
 #include "SystemMatrix.h"
 
@@ -55,6 +56,19 @@ public:
 
     return true;
   }
+
+  //! \brief Set a parameter in the source and flux functions.
+  //! \param name Name of parameter
+  //! \param value Value of parameter
+  void setParam(const std::string& name, double value)
+  {
+    EvalFunction* f = dynamic_cast<EvalFunction*>(sourceTerm);
+    if (f)
+      f->setParam(name, value);
+    f = dynamic_cast<EvalFunction*>(flux);
+    if (f)
+      f->setParam(name, value);
+  }
 };
 
 
@@ -71,6 +85,22 @@ public:
   //! \param torder Time integration order
   SIMHeatCoSTA(int torder) : SIMHeatEquation<Dim,HeatEquationCoSTA>(torder)
   {
+  }
+
+  //! \brief Set a parameter in relevant functions.
+  //! \param name Name of parameter
+  //! \param value Value of parameter
+  void setParam(const std::string& name, double value)
+  {
+    this->heq.setParam(name, value);
+    if (this->mySol) {
+      EvalFunction* f = dynamic_cast<EvalFunction*>(this->mySol->getScalarSol());
+      if (f)
+        f->setParam(name, value);
+      VecFuncExpr* v = dynamic_cast<VecFuncExpr*>(this->mySol->getScalarSecSol());
+      if (v)
+        v->setParam(name, value);
+    }
   }
 
 protected:

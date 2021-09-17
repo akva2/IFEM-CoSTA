@@ -2,7 +2,8 @@ import IFEM_CoSTA
 
 test = IFEM_CoSTA.HeatEquation('Square-heat.xinp')
 
-mu = {'dt' : 1.0}
+mu = {'dt' : 1.0,
+      'alpha' : 1.0}
 uprev = [1.0]*test.ndof
 
 upred = test.predict(mu, uprev)
