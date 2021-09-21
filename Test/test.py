@@ -17,6 +17,12 @@ print(ucorr)
 dofs = test.dirichlet_dofs()
 print(dofs)
 
+model = test.visualization_model()
+print(model)
+
+sols = test.visualization_results(ucorr)
+print(sols)
+
 test2 = IFEM_CoSTA.AdvectionDiffusion('Square-abd1-ad.xinp')
 
 mu = {'dt' : 1.0}
@@ -34,6 +40,12 @@ print(ucorr)
 dofs = test2.dirichlet_dofs()
 print(dofs)
 
+model = test2.visualization_model()
+print(model)
+
+sols = test2.visualization_results(ucorr)
+print(sols)
+
 test3 = IFEM_CoSTA.Darcy('DarcySquare.xinp')
 
 mu = {'dt' : 1.0}
@@ -50,3 +62,9 @@ print(ucorr)
 
 dofs = test3.dirichlet_dofs()
 print(dofs)
+
+model = test3.visualization_model()
+print(model)
+
+sols = test3.visualization_results(ucorr)
+print(sols)
