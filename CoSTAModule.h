@@ -136,6 +136,8 @@ public:
     up = uprev;
     solModel->setSolution(up, 1);
     model->setMode(SIM::DYNAMIC);
+    this->setDiscreteLoad(nullptr);
+
     Vector dummy;
     model->updateDirichlet(tp.time.t, &dummy);
     if (!this->solveStep(tp))
