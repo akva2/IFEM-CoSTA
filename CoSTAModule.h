@@ -219,6 +219,19 @@ public:
     return ret;
   }
 
+  //! \brief Returns initial condition for solution.
+  std::vector<double> initialCondition()
+  {
+    if (model1D)
+      model1D->setInitialConditions();
+    else if (model2D)
+      model2D->setInitialConditions();
+    else
+      model3D->setInitialConditions();
+
+    return solModel->getSolution(0);
+  }
+
   size_t ndof; //!< Number of degrees of freedom in simulator
 
   //! \brief Static helper to export to python.
@@ -232,6 +245,7 @@ public:
         .def("predict", &CoSTAModule<Sim>::predict)
         .def("residual", &CoSTAModule<Sim>::residual)
         .def("dirichlet_dofs", &CoSTAModule<Sim>::dirichletDofs)
+        .def("initial_condition", &CoSTAModule<Sim>::initialCondition)
         .def_readonly("ndof", &CoSTAModule<Sim>::ndof);
   }
 
