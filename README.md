@@ -14,8 +14,6 @@ This module contains the CoSTA simulators built using the IFEM library.
 This is done by first navigating to a folder `<App root>` in which you want
 the applications and typing
 
-    git clone https://github.com/OPM/IFEM-Elasticity
-    git clone https://github.com/OPM/IFEM-ThermoElasticity
     git clone https://github.com/OPM/IFEM-AdvectionDiffusion
     git clone https://github.com/OPM/IFEM-Darcy
 
