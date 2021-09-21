@@ -125,13 +125,12 @@ public:
   std::vector<double> predict(const ParameterMap& mu,
                               const std::vector<double>& uprev)
   {
-    double dt = this->getScalarParameter(mu, "dt");
-
     TimeStep tp;
     tp.step = 1;
-    tp.time.t = tp.time.dt = dt;
+    std::tie(tp.time.dt, tp.time.t) = this->getTimeParams(mu);
     tp.starTime = 0.0;
-    tp.stopTime = 2.0*dt;
+    tp.stopTime = tp.time.t + tp.time.dt;
+
     Vector up;
     up = uprev;
     solModel->setSolution(up, 1);
@@ -154,10 +153,9 @@ public:
                                const std::vector<double>& uprev,
                                const std::vector<double>& unext)
   {
-    double dt = this->getScalarParameter(mu, "dt");
-
     TimeDomain time;
-    time.t = time.dt = dt;
+    std::tie(time.dt, time.t) = this->getTimeParams(mu);
+
     Vector up;
     up = uprev;
     solModel->setSolution(up, 1);
@@ -183,18 +181,18 @@ public:
                               const std::vector<double>& uprev,
                               const std::vector<double>& sigma)
   {
-    double dt = this->getScalarParameter(mu, "dt");
-
     TimeStep tp;
     tp.step = 1;
-    tp.time.t = tp.time.dt = dt;
+    std::tie(tp.time.dt, tp.time.t) = this->getTimeParams(mu);
     tp.starTime = 0.0;
-    tp.stopTime = 2.0*dt;
+    tp.stopTime = tp.time.t + tp.time.dt;
+
     Vector up;
     up = uprev;
     solModel->setSolution(up, 1);
     model->setMode(SIM::DYNAMIC);
     this->setDiscreteLoad(&sigma);
+
     Vector dummy;
     model->updateDirichlet(tp.time.t,&dummy);
     if (!this->solveStep(tp))
@@ -241,7 +239,7 @@ protected:
   //! \brief Get a scalar parameter from map.
   //! \param map Map with parameters
   //! \param key Name of parameter
-  double getScalarParameter(const ParameterMap& map, const std::string& key)
+  double getScalarParameter(const ParameterMap& map, const std::string& key) const
   {
     const auto it = map.find(key);
     if (it == map.end())
@@ -275,12 +273,23 @@ protected:
        return model3D->solveStep(tp);
    }
 
-   CoSTASIMAllocator<Sim> allocator; //!< Helper for simulator allocation
-   std::unique_ptr<Sim<SIM1D>> model1D; //!< Pointer to 1D instance of simulator
-   std::unique_ptr<Sim<SIM2D>> model2D; //!< Pointer to 2D instance of simulator
-   std::unique_ptr<Sim<SIM3D>> model3D; //!< Pointer to 3D instance of simulator
-   SIMsolution* solModel; //!< Pointer to SIMsolution interface of simulator
-   SIMbase* model; //!< Pointer to SIMbase interface of simulator
+  //! \brief Extract time stepping parameters from parameter map.
+  std::tuple<double, double> getTimeParams(const ParameterMap& map) const
+  {
+    double dt = this->getScalarParameter(map, "dt");
+    double t = dt;
+    if (map.find("t") != map.end())
+      t = this->getScalarParameter(map, "t");
+
+    return std::make_tuple(dt,t);
+  }
+
+  CoSTASIMAllocator<Sim> allocator; //!< Helper for simulator allocation
+  std::unique_ptr<Sim<SIM1D>> model1D; //!< Pointer to 1D instance of simulator
+  std::unique_ptr<Sim<SIM2D>> model2D; //!< Pointer to 2D instance of simulator
+  std::unique_ptr<Sim<SIM3D>> model3D; //!< Pointer to 3D instance of simulator
+  SIMsolution* solModel; //!< Pointer to SIMsolution interface of simulator
+  SIMbase* model; //!< Pointer to SIMbase interface of simulator
 };
 
 #endif
