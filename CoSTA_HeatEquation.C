@@ -395,6 +395,13 @@ public:
         }
   }
 
+  //! \brief Returns analytical solutions projected on primary basis.
+  //! \param t Time to evaluate at
+  std::map<std::string, std::vector<double>> getAnaSols(double t)
+  {
+    return this->CoSTASIMHelper::getAsolScalar(t, this->mySol, this);
+  }
+
 protected:
   //! \brief Assembles problem-dependent discrete terms, if any.
   bool assembleDiscreteTerms(const IntegrandBase*,

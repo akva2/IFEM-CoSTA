@@ -14,6 +14,8 @@
 #ifndef COSTA_MODULE_H_
 #define COSTA_MODULE_H_
 
+#include "AnaSol.h"
+#include "Functions.h"
 #include "IFEM.h"
 #include "Profiler.h"
 #include "SAM.h"
@@ -57,6 +59,8 @@ struct CoSTASIMAllocator
 class CoSTASIMHelper
 {
 public:
+  using AnasolMap = std::map<std::string, std::vector<double>>; //!< Convenience type alias
+
   //! \brief Set an additional discrete load.
   //! \param vec Load to use (nullptr for none)
   void setDiscreteLoad(const std::vector<double>* vec)
@@ -84,6 +88,36 @@ protected:
     }
 
     return true;
+  }
+
+  //! \brief Returns analytical solutions projected on primary basis (scalar equation).
+  //! \param t Time to evaluate at
+  //! \param anaSol Analytical solution to evaluate
+  //! \param model Model to evaluate for
+  static AnasolMap getAsolScalar(double t, const AnaSol* anaSol,
+                                 const SIMbase* model)
+  {
+    std::map<std::string, std::vector<double>> result;
+
+    if (anaSol && anaSol->getScalarSol()) {
+      Vector prim(model->getNoDOFs());
+      model->project(prim, anaSol->getScalarSol(), 1, 0, 1,
+                     SIMoptions::GLOBAL, t);
+      result.insert(std::make_pair("primary",prim));
+    }
+
+    if (anaSol && anaSol->getScalarSecSol()) {
+      Matrix ssol(model->getNoSpaceDim(), model->getNoDOFs());
+      Vector secv(model->getNoSpaceDim()*model->getNoDOFs());
+      model->project(secv, anaSol->getScalarSecSol(), 1, 0,
+                     model->getNoSpaceDim(), SIMoptions::GLOBAL, t);
+      ssol = secv;
+      std::string sec = "secondary_x";
+      for (size_t i = 1; i <= model->getNoSpaceDim(); ++i, ++sec.back())
+        result.insert(std::make_pair(sec, ssol.getRow(i)));
+    }
+
+    return result;
   }
 
   const std::vector<double>* discreteLoad = nullptr; //!< Additional discrete load vector
@@ -235,6 +269,22 @@ public:
     return solModel->getSolution(0);
   }
 
+  //! \brief Returns the analytical solution.
+  //! \param mu Map of parameters
+  std::map<std::string, std::vector<double>> anaSol(const ParameterMap& mu)
+  {
+    double dt, t;
+    std::tie(dt, t) = this->getTimeParams(mu);
+    this->setParameters(mu);
+
+    if (model1D)
+      return model1D->getAnaSols(t);
+    else if (model2D)
+      return model2D->getAnaSols(t);
+    else
+      return model3D->getAnaSols(t);
+  }
+
   size_t ndof; //!< Number of degrees of freedom in simulator
 
   //! \brief Static helper to export to python.
@@ -249,6 +299,7 @@ public:
         .def("residual", &CoSTAModule<Sim>::residual)
         .def("dirichlet_dofs", &CoSTAModule<Sim>::dirichletDofs)
         .def("initial_condition", &CoSTAModule<Sim>::initialCondition)
+        .def("anasol", &CoSTAModule<Sim>::anaSol)
         .def_readonly("ndof", &CoSTAModule<Sim>::ndof);
   }
 
