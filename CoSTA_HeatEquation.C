@@ -133,7 +133,7 @@ public:
   {
     if (m_mode == SIM::RHS_ONLY) {
       ElmMats& A = static_cast<ElmMats&>(elmInt);
-      A.A[0].multiply(A.vec[0], A.b[0], -1.0, 1.0);
+      A.A[0].multiply(A.vec[0], A.b[0], 1.0, -1.0);
     }
 
     return true;
@@ -411,7 +411,7 @@ protected:
 };
 
 
-//! \brief Partial specialization for configurator
+//! \brief Partial specialization for configurator.
 template<class Dim>
 struct SolverConfigurator<SIMHeatCoSTA<Dim>> {
   //! \brief Setup a heat equation simulator.
