@@ -27,7 +27,7 @@ void export_Darcy(pybind11::module& m);
 void export_HeatEquation(pybind11::module& m);
 
 
-Profiler prof("CoSTA-Module"); //!< Global instance of profiler
+Profiler prof("CoSTA-Module", false); //!< Global instance of profiler
 
 
 //! \brief Exports the IFEM_CoSTA python module.
