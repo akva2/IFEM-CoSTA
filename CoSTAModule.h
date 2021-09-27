@@ -135,9 +135,13 @@ public:
 
   //! \brief Constructor.
   //! \param infile Input file to parse
-  CoSTAModule(const std::string& infile)
+  //! \param verbose If false, suppress stdout output
+  CoSTAModule(const std::string& infile, bool verbose)
   {
     IFEM::Init(0,nullptr,"");
+    if (!verbose)
+      IFEM::cout.setPIDs(-1, 0);
+
     SIMargsBase preparser("dummy");
     if (!preparser.readXML(infile.c_str(), false))
       throw std::runtime_error("Error preparsing input file");
@@ -150,6 +154,9 @@ public:
       allocator.allocate(model3D, model, solModel, infile);
 
     ndof = model->getNoDOFs();
+
+    if (!verbose)
+      model->getProcessAdm().cout.setPIDs(-1, 0);
   }
 
   //! \brief Perform a prediction step in a CoSTA loop.
@@ -293,7 +300,9 @@ public:
   static void pyExport(pybind11::module& m, const char* name)
   {
     pybind11::class_<CoSTAModule<Sim>>(m, name)
-        .def(pybind11::init<const std::string&>())
+        .def(pybind11::init<const std::string&, bool>(),
+             pybind11::arg("infile"),
+             pybind11::arg("verbose") = true)
         .def("correct", &CoSTAModule<Sim>::correct)
         .def("predict", &CoSTAModule<Sim>::predict)
         .def("residual", &CoSTAModule<Sim>::residual)
