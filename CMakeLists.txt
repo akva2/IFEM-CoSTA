@@ -60,6 +60,11 @@ find_program(PYTEST_COMMAND NAMES pytest-3 pytest)
 add_test(NAME python_tests COMMAND ${PYTEST_COMMAND} --junitxml=${PROJECT_BINARY_DIR}/pytestoutput.xml WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/Test)
 set_tests_properties(python_tests PROPERTIES ENVIRONMENT PYTHONPATH=${PROJECT_BINARY_DIR})
 
+get_target_property(COSTA_SOURCES IFEM_CoSTA SOURCES)
+foreach(SRC ${COSTA_SOURCES})
+  list(APPEND CHECK_SOURCES ${PROJECT_SOURCE_DIR}/${SRC})
+endforeach()
+
 # Installation etc
 file(WRITE ${PROJECT_BINARY_DIR}/IFEM_CoSTA/__init__.py "from IFEM_CoSTA.IFEM_CoSTA import *\n")
 file(GENERATE OUTPUT ${PROJECT_BINARY_DIR}/setup.py
