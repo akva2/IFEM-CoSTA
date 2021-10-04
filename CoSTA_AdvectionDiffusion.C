@@ -33,7 +33,7 @@ class AdvectionDiffusionCoSTA : public AdvectionDiffusionBDF
 public:
   //! \brief The default constructor initializes all pointers to zero.
   //! \param[in] n Number of spatial dimensions
-  AdvectionDiffusionCoSTA(unsigned short int n) :
+  explicit AdvectionDiffusionCoSTA(unsigned short int n) :
     AdvectionDiffusionBDF(n, TimeIntegration::BE)
   {
   }
@@ -67,7 +67,7 @@ class SIMADCoSTA : public SIMAD<Dim,AdvectionDiffusionBDF>,
 public:
   //! \brief Constructor
   //! \param ad The integrand to use
-  SIMADCoSTA(AdvectionDiffusionCoSTA& ad) :
+  explicit SIMADCoSTA(AdvectionDiffusionCoSTA& ad) :
     SIMAD<Dim,AdvectionDiffusionBDF>(ad,true)
   {
   }

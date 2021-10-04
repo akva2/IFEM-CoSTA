@@ -177,7 +177,7 @@ public:
 
   //! \brief Constructor
   //! \param torder Time integration order
-  SIMHeatCoSTA(int torder) : Dim(1), heq(Dim::dimension)
+  explicit SIMHeatCoSTA(int torder) : Dim(1), heq(Dim::dimension)
   {
     Dim::myProblem = &heq;
     Dim::myHeading = "Heat equation solver";

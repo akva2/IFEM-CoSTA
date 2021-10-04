@@ -32,7 +32,7 @@ class DarcyCoSTA : public Darcy
 public:
   //! \brief The default constructor initializes all pointers to zero.
   //! \param[in] n Number of spatial dimensions
-  DarcyCoSTA(unsigned short int n) :
+  explicit DarcyCoSTA(unsigned short int n) :
     Darcy(n, 1)
   {
   }
@@ -66,7 +66,7 @@ class SIMDarcyCoSTA : public SIMDarcy<Dim>,
 public:
   //! \brief Constructor.
   //! \param integrand Reference to integrand to use
-  SIMDarcyCoSTA(DarcyCoSTA& integrand) :
+  explicit SIMDarcyCoSTA(DarcyCoSTA& integrand) :
     SIMDarcy<Dim>(integrand)
   {
   }
