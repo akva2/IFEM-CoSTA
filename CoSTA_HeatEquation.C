@@ -353,14 +353,14 @@ public:
       if (v)
         v->setParam(name, value);
       for (auto& it : this->myScalars) {
-        EvalFunction* f = dynamic_cast<EvalFunction*>(it.second);
+        f = dynamic_cast<EvalFunction*>(it.second);
         if (f)
           f->setParam(name, value);
       }
       for (auto& it : this->myScalars) {
-        VecFuncExpr* f = dynamic_cast<VecFuncExpr*>(it.second);
-        if (f)
-          f->setParam(name, value);
+        v = dynamic_cast<VecFuncExpr*>(it.second);
+        if (v)
+          v->setParam(name, value);
       }
     }
     if (ICf.empty() && !this->myICs.empty())
