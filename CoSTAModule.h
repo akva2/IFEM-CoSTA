@@ -364,15 +364,15 @@ protected:
 
   //! \brief Helper function to perform a time step.
   //! \param tp Time stepping parameters
-  bool solveStep(TimeStep& tp)
-   {
-     if (model1D)
-       return model1D->solveStep(tp);
-     else if (model2D)
-       return model2D->solveStep(tp);
-     else
-       return model3D->solveStep(tp);
-   }
+  bool solveStep(const TimeStep& tp)
+  {
+    if (model1D)
+      return model1D->solveStep(tp);
+    else if (model2D)
+      return model2D->solveStep(tp);
+    else
+      return model3D->solveStep(tp);
+  }
 
   //! \brief Extract time stepping parameters from parameter map.
   std::tuple<double, double> getTimeParams(const ParameterMap& map) const
