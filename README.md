@@ -32,7 +32,7 @@ To compile, first navigate to the root catalogue `<App root>`.
 1. `cd `IFEM-CoSTA
 2. `mkdir Debug`
 3. `cd Debug`
-5. `cmake -DCMAKE_BUILD_TYPE=Debug ..`
+5. `cmake -DCMAKE_BUILD_TYPE=Debug -DPYTHON_EXECUTABLE=/usr/bin/python3 ..`
 6. `make`
 
 This will compile the python modules.
