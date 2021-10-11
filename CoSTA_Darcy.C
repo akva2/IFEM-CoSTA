@@ -15,6 +15,7 @@
 #include <pybind11/stl.h>
 
 #include "CoSTAModule.h"
+#include "Darcy.h"
 #include "SIMDarcy.h"
 
 #include "AlgEqSystem.h"
