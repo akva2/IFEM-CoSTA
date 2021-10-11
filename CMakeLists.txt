@@ -36,8 +36,12 @@ include_directories(${IFEM_INCLUDES} ${PROJECT_SOURCE_DIR} ../Common
                     ${AD_DIR}/Common/AdvectionDiffusion
                     ${DARCY_DIR}/Common/Darcy)
 
-add_subdirectory(${AD_DIR}/Common/AdvectionDiffusion AdvectionDiffusion)
-add_subdirectory(${DARCY_DIR}/Common/Darcy Darcy)
+if(NOT TARGET CommonAD)
+  add_subdirectory(${AD_DIR}/Common/AdvectionDiffusion AdvectionDiffusion)
+endif()
+if(NOT TARGET CommonDarcy)
+  add_subdirectory(${DARCY_DIR}/Common/Darcy Darcy)
+endif()
 
 set(LIBRARY_OUTPUT_PATH IFEM_CoSTA)
 
