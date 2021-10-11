@@ -21,6 +21,10 @@ The source code for this module should be placed alongside the others.
 The build system uses sibling directory logic to locate the
 modules.
 
+### Getting all dependencies
+    sudo apt install libpython3-dev
+    sudo apt install pybind11-dev
+
 ### Compiling the code
 
 To compile, first navigate to the root catalogue `<App root>`.
