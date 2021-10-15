@@ -388,7 +388,7 @@ public:
         for (const auto& ic : it.second)
         {
           // Do we have this field?
-          Vector* field = this->getField(ic.sim_field);
+          RealArray* field = this->getField(ic.sim_field);
           if (!field) continue;
           this->project(*field,ICf[ic.sim_field].get(),ic.basis,ic.component-1,
                         this->getNoFields(ic.basis));
@@ -397,7 +397,7 @@ public:
 
   //! \brief Returns analytical solutions projected on primary basis.
   //! \param t Time to evaluate at
-  std::map<std::string, std::vector<double>> getAnaSols(double t)
+  std::map<std::string,RealArray> getAnaSols(double t)
   {
     return this->CoSTASIMHelper::getAsolScalar(t, this->mySol, this);
   }
