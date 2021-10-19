@@ -45,10 +45,11 @@ struct CoSTASIMAllocator
   //! \param model Pointer to SIMbase interface for simulator
   //! \param solModel Pointer to SIMsolution interface for simulatorA
   //! \param infile Input file to parse.
-  //!\ details This must be specialized for a given simulator
+  //!
+  //! \details This struct must be specialized for a given simulator
   template<class Dim>
-   void allocate(std::unique_ptr<Sim<Dim>>& newModel, SIMbase*& model,
-                 SIMsolution*& solModel, const std::string& infile);
+  void allocate(std::unique_ptr<Sim<Dim>>& newModel, SIMbase*& model,
+                SIMsolution*& solModel, const std::string& infile);
 };
 
 
@@ -59,14 +60,11 @@ struct CoSTASIMAllocator
 class CoSTASIMHelper
 {
 public:
-  using AnasolMap = std::map<std::string, std::vector<double>>; //!< Convenience type alias
+  using AnasolMap = std::map<std::string,RealArray>; //!< Convenience type alias
 
   //! \brief Set an additional discrete load.
   //! \param vec Load to use (nullptr for none)
-  void setDiscreteLoad(const std::vector<double>* vec)
-  {
-    discreteLoad = vec;
-  }
+  void setDiscreteLoad(const RealArray* vec) { discreteLoad = vec;  }
 
 protected:
   //! \brief Assembles the discrete load.
@@ -97,7 +95,7 @@ protected:
   static AnasolMap getAsolScalar(double t, const AnaSol* anaSol,
                                  const SIMbase* model)
   {
-    std::map<std::string, std::vector<double>> result;
+    std::map<std::string,RealArray> result;
 
     if (anaSol && anaSol->getScalarSol()) {
       Vector prim(model->getNoDOFs());
@@ -120,7 +118,7 @@ protected:
     return result;
   }
 
-  const std::vector<double>* discreteLoad = nullptr; //!< Additional discrete load vector
+  const RealArray* discreteLoad = nullptr; //!< Additional discrete load vector
 };
 
 
@@ -131,7 +129,7 @@ protected:
 template<template<class Dim> class Sim>
 class CoSTAModule {
 public:
-  using ParameterMap = std::map<std::string, std::variant<double,std::vector<double>>>; //!< Map for parameters
+  using ParameterMap = std::map<std::string, std::variant<double,RealArray>>; //!< Map for parameters
 
   //! \brief Constructor.
   //! \param infile Input file to parse
@@ -162,8 +160,7 @@ public:
   //! \brief Perform a prediction step in a CoSTA loop.
   //! \param mu Model parameters
   //! \param uprev State to make a time-step from
-  std::vector<double> predict(const ParameterMap& mu,
-                              const std::vector<double>& uprev)
+  RealArray predict(const ParameterMap& mu, const RealArray& uprev)
   {
     TimeStep tp;
     tp.step = 1;
@@ -171,9 +168,7 @@ public:
     tp.starTime = 0.0;
     tp.stopTime = tp.time.t + tp.time.dt;
 
-    Vector up;
-    up = uprev;
-    solModel->setSolution(up, 1);
+    solModel->setSolution(uprev,1);
     model->setMode(SIM::DYNAMIC);
     this->setDiscreteLoad(nullptr);
     this->setParameters(mu);
@@ -190,18 +185,14 @@ public:
   //! \param mu Model parameters
   //! \param uprev State to make a time-step from
   //! \param unext State to calculate residual for
-  std::vector<double> residual(const ParameterMap& mu,
-                               const std::vector<double>& uprev,
-                               const std::vector<double>& unext)
+  RealArray residual(const ParameterMap& mu,
+                     const RealArray& uprev, const RealArray& unext)
   {
     TimeDomain time;
     std::tie(time.dt, time.t) = this->getTimeParams(mu);
 
-    Vector up;
-    up = uprev;
-    solModel->setSolution(up, 1);
-    up = unext;
-    solModel->setSolution(up, 0);
+    solModel->setSolution(uprev,1);
+    solModel->setSolution(unext,0);
     model->setMode(SIM::RHS_ONLY);
     this->setDiscreteLoad(nullptr);
     this->setParameters(mu);
@@ -210,18 +201,17 @@ public:
     if (!model->assembleSystem(time, solModel->getSolutions()))
       throw std::runtime_error("Failure during residual calculation");
 
-    model->extractLoadVec(up);
-
-    return std::move(up);
+    Vector loadVec;
+    model->extractLoadVec(loadVec);
+    return std::move(loadVec);
   }
 
   //! \brief Perform a correction step in a CoSTA loop.
   //! \param mu Model parameters
   //! \param uprev State to make a time-step from
   //! \param sigma Right-hand-side correction to use
-  std::vector<double> correct(const ParameterMap& mu,
-                              const std::vector<double>& uprev,
-                              const std::vector<double>& sigma)
+  RealArray correct(const ParameterMap& mu,
+                    const RealArray& uprev, const RealArray& sigma)
   {
     TimeStep tp;
     tp.step = 1;
@@ -229,9 +219,7 @@ public:
     tp.starTime = 0.0;
     tp.stopTime = tp.time.t + tp.time.dt;
 
-    Vector up;
-    up = uprev;
-    solModel->setSolution(up, 1);
+    solModel->setSolution(uprev,1);
     model->setMode(SIM::DYNAMIC);
     this->setDiscreteLoad(&sigma);
     this->setParameters(mu);
@@ -263,7 +251,7 @@ public:
   }
 
   //! \brief Returns initial condition for solution.
-  std::vector<double> initialCondition(const ParameterMap& mu)
+  RealArray initialCondition(const ParameterMap& mu)
   {
     this->setParameters(mu);
     if (model1D)
@@ -278,7 +266,7 @@ public:
 
   //! \brief Returns the analytical solution.
   //! \param mu Map of parameters
-  std::map<std::string, std::vector<double>> anaSol(const ParameterMap& mu)
+  std::map<std::string,RealArray> anaSol(const ParameterMap& mu)
   {
     double dt, t;
     std::tie(dt, t) = this->getTimeParams(mu);
@@ -352,7 +340,7 @@ protected:
 
   //! \brief Helper function to provide RHS correction to simulator.
   //! \param load The RHS correction to provide to simulator
-  void setDiscreteLoad(const std::vector<double>* load)
+  void setDiscreteLoad(const RealArray* load)
   {
     if (model1D)
       model1D->setDiscreteLoad(load);
