@@ -80,9 +80,12 @@ protected:
       return false;
 
     for (size_t i = 1; i <= nDofs; ++i) {
-      int eq = sam->getEquation(i, 1);
-      if (eq != 0)
-        v->getPtr()[eq-1] += (*discreteLoad)[i-1];
+      auto [first, last] = sam->getNodeDOFs(i);
+      for (int d = first; d <= last; ++d)  {
+        int eq = sam->getEquation(i, d-first+1);
+        if (eq > 0)
+          v->getPtr()[eq-1] += (*discreteLoad)[d-1];
+      }
     }
 
     return true;
