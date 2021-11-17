@@ -87,6 +87,7 @@ class DarcyCoSTA : public Darcy
 public:
   //! \brief The default constructor initializes all pointers to zero.
   //! \param[in] n Number of spatial dimensions
+  //! \param[in] torder Order of time stepping scheme (BE/BDF2)
   explicit DarcyCoSTA(unsigned short int n, int torder) :
     Darcy(n, torder)
   {
@@ -142,6 +143,7 @@ class MixedDarcyCoSTA : public MixedDarcy
 public:
   //! \brief The default constructor initializes all pointers to zero.
   //! \param[in] n Number of spatial dimensions
+  //! \param[in] torder Order of time stepping scheme (BE/BDF2)
   explicit MixedDarcyCoSTA(unsigned short int n, int torder) :
     MixedDarcy(n, torder)
   {
@@ -186,12 +188,16 @@ class SIMDarcyCoSTA : public SIMDarcy<Dim>,
 public:
   //! \brief Constructor.
   //! \param integrand Reference to integrand to use
+  //! \param nf Number of fields on each basis
   explicit SIMDarcyCoSTA(Darcy& integrand,
                          const std::vector<unsigned char>& nf) :
     SIMDarcy<Dim>(integrand, nf)
   {
   }
 
+  //! \brief Set a parameter in the functions.
+  //! \param name Name of parameter
+  //! \param value Value of parameter
   void setParam(const std::string& name, double value)
   {
     this->drc.setParam(name, value);
