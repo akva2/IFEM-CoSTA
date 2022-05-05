@@ -82,6 +82,14 @@ public:
     return this->CoSTASIMHelper::getAsolScalar(t, this->mySol, this);
   }
 
+  //! \brief Returns a quantity of interest.
+  RealArray getQI(const RealArray&,
+                  const TimeDomain&,
+                  const std::string&)
+  {
+    return RealArray();
+  }
+
 protected:
   //! \brief Assembles problem-dependent discrete terms, if any.
   bool assembleDiscreteTerms(const IntegrandBase*,

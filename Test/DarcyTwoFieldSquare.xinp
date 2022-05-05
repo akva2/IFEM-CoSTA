@@ -4,6 +4,11 @@
 
   <geometry dim="2" sets="true">
     <refine type="uniform" patch="1" u="1" v="1"/>
+    <topologysets>
+      <set name="NoZone" type="face">
+        <item patch="1"/>
+      </set>
+    </topologysets>
   </geometry>
 
   <darcy twofield="true">
@@ -34,6 +39,10 @@
     <dispersivity type="constant">D</dispersivity>
     <subiterations max="50" tol="1e-10"/>
     <gravity>1.0</gravity>
+
+    <quantities_of_interest>
+      <qi name="no_concentration_zone" set="NoZone" type="ConcentrationIntegral"/>
+    </quantities_of_interest>
   </darcy>
 
   <timestepping start="0.0" end="1.0" dt="0.1" type="be"/>

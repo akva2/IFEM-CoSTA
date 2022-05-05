@@ -23,7 +23,9 @@
 #include "AlgEqSystem.h"
 #include "ASMmxBase.h"
 #include "ElmMats.h"
+#include "ElmNorm.h"
 #include "ExprFunctions.h"
+#include "ForceIntegrator.h"
 #include "SIMconfigure.h"
 #include "SystemMatrix.h"
 #include "TimeIntUtils.h"
@@ -185,6 +187,65 @@ public:
 
 
 /*!
+  \brief Class representing the integrand for computing the integral of the concentration.
+*/
+
+class DarcyConcentrationIntegral : public ForceBase
+{
+public:
+  //! \brief Constructor for global force resultant integration.
+  //! \param[in] p The heat equation problem to evaluate fluxes for
+  explicit DarcyConcentrationIntegral(MixedDarcy& p) : ForceBase(p) {}
+
+  using ForceBase::evalInt;
+  //! \brief Evaluates the integrand at a boundary point.
+  //! \param elmInt The local integral object to receive the contributions
+  //! \param[in] fe Finite element data of current integration point
+  //! \param[in] time Parameters for nonlinear and time-dependent simulations
+  //! \param[in] X Cartesian coordinates of current integration point
+  bool evalInt(LocalIntegral& elmInt, const FiniteElement& fe,
+               const TimeDomain& time, const Vec3& X) const override
+  {
+    ElmNorm& elmNorm = static_cast<ElmNorm&>(elmInt);
+
+    double C = fe.N.dot(elmNorm.vec[1]);
+
+    elmNorm[0] += C*fe.detJxW;
+
+    return true;
+  }
+
+  //! \brief Returns the number of force components.
+  size_t getNoComps() const override { return 1; }
+
+  using ForceBase::initElement;
+  //! \brief Initializes current element for numerical integration.
+  //! \param[in] MNPC Matrix of nodal point correspondance for current element
+  //! \param[in] fe Nodal and integration point data for current element
+  //! \param[in] X0 Cartesian coordinates of the element center
+  //! \param[in] nPt Number of integration points in this element
+  //! \param elmInt Local integral for element
+  //!
+  //! \details This method is invoked once before starting the numerical
+  //! integration loop over the Gaussian quadrature points over an element.
+  //! It is supposed to perform all the necessary internal initializations
+  //! needed before the numerical integration is started for current element.
+  //! Reimplement this method for problems requiring the element center and/or
+  //! the number of integration points during/before the integrand evaluations.
+  bool initElement(const std::vector<int>& MNPC,
+                   const FiniteElement& fe,
+                   const Vec3& X0, size_t nPt,
+                   LocalIntegral& elmInt) override
+  {
+    return myProblem.initElement(MNPC,elmInt);
+   }
+
+  //! \brief This is a volume integrand.
+  bool hasInteriorTerms() const override { return true; }
+};
+
+
+/*!
  \brief CoSTA simulator for Darcy.
 */
 
@@ -241,7 +302,59 @@ public:
     return this->CoSTASIMHelper::getAsolScalar(t, this->mySol, this);
   }
 
+  //! \brief Returns a quantity of interest.
+  //! \param[in] u Solution vector to evaluate for
+  //! \param[in] time Parameters for nonlinear and time-dependent simulations
+  //! \param[in] qi Name of QI
+  RealArray getQI(const RealArray& u,
+                  const TimeDomain& time,
+                  const std::string& qi)
+  {
+    Vector integral;
+    const auto it = myQI.find(qi);
+    if (it != myQI.end()) {
+      Vectors solution(1);
+      solution[0].resize(u.size());
+      std::copy(u.begin(), u.end(), solution[0].begin());
+      it->second.itg->initBuffer(this->getNoElms());
+      SIM::integrate(solution, this, it->second.code, time, it->second.itg.get());
+      it->second.itg->assemble(integral);
+    }
+    return integral;
+  }
+
 protected:
+  //! \brief Parses a data section from an XML element.
+  bool parse(const TiXmlElement* elem) override
+  {
+    if (!strcasecmp(elem->Value(),"darcy")) {
+      const TiXmlElement* child2 = elem->FirstChildElement();
+      for (; child2; child2 = child2->NextSiblingElement())
+        if (!strcasecmp(child2->Value(), "quantities_of_interest"))  {
+          const TiXmlElement* child = child2->FirstChildElement("qi");
+          for (; child; child = child->NextSiblingElement("qi")) {
+            std::string name, set, type;
+            QI qi;
+            utl::getAttribute(child, "name", name);
+            utl::getAttribute(child, "set", set);
+            utl::getAttribute(child, "type", type);
+            if (type == "ConcentrationIntegral" && this->getProblem()->getNoFields() > 1) {
+              MixedDarcy& itg = static_cast<MixedDarcy&>(*this->myProblem);
+              qi.itg = std::make_unique<DarcyConcentrationIntegral>(itg);
+              qi.code = this->getUniquePropertyCode(set);
+            }
+            if (!name.empty() && !set.empty() && qi.itg) {
+              myQI.emplace(std::make_pair(name, std::move(qi)));
+              IFEM::cout << "Quantity of interest: name = " << name
+                         << " set = " << set << " type = " << type << std::endl;
+            }
+          }
+        }
+    }
+
+    return this->SIMDarcy<Dim>::parse(elem);
+  }
+
   //! \brief Assembles problem-dependent discrete terms, if any.
   bool assembleDiscreteTerms(const IntegrandBase*,
                              const TimeDomain&) override
@@ -250,6 +363,14 @@ protected:
                                       this->mySam,
                                       this->myEqSys->getVector(0));
   }
+
+  //! \brief Struct describing a quantity of interest.
+  struct QI {
+    std::unique_ptr<ForceBase> itg; //!< Integrand to use for evaluation
+    int code; //!< Property code
+  };
+
+  std::map<std::string, QI> myQI; //!< Map of quantities of interest
 };
 
 
