@@ -52,3 +52,5 @@ def testDarcyTwoField():
 
     dofs = darcy.dirichlet_dofs()
     np.testing.assert_array_equal(dofs, [1,2,3,4,5,6,7,8,11,12,13,14,15,16,17,18])
+    qi = darcy.qi(mu, ucorr, 'no_concentration_zone')
+    np.testing.assert_allclose(qi, [0.01949715369980741])

@@ -283,6 +283,26 @@ public:
       return model3D->getAnaSols(t);
   }
 
+  //! \brief Returns a quantity of interest from a solution vector.
+  //! \param mu Map of parameters
+  //! \param u Solution vector to extract QI from
+  //! \param qi Name of quantity of interest
+  RealArray getQI(const ParameterMap& mu,
+                  const RealArray& u,
+                  const std::string& qi)
+  {
+    TimeDomain time;
+    std::tie(time.dt, time.t) = this->getTimeParams(mu);
+    this->setParameters(mu);
+
+    if (model1D)
+      return model1D->getQI(u, time, qi);
+    else if (model2D)
+      return model2D->getQI(u, time, qi);
+    else
+      return model3D->getQI(u, time, qi);
+  }
+
   size_t ndof; //!< Number of degrees of freedom in simulator
 
   //! \brief Static helper to export to python.
@@ -300,6 +320,7 @@ public:
         .def("dirichlet_dofs", &CoSTAModule<Sim>::dirichletDofs)
         .def("initial_condition", &CoSTAModule<Sim>::initialCondition)
         .def("anasol", &CoSTAModule<Sim>::anaSol)
+        .def("qi", &CoSTAModule<Sim>::getQI)
         .def_readonly("ndof", &CoSTAModule<Sim>::ndof);
   }
 
