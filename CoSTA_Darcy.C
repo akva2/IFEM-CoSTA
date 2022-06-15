@@ -16,6 +16,7 @@
 
 #include "CoSTAModule.h"
 #include "Darcy.h"
+#include "DarcySolutions.h"
 #include "MixedDarcy.h"
 #include "SIMDarcy.h"
 
@@ -121,6 +122,9 @@ public:
     EvalFunction* fs = dynamic_cast<EvalFunction*>(source);
     if (fs)
       fs->setParam(name,value);
+    DiracSum* ds = dynamic_cast<DiracSum*>(source);
+    if (ds)
+      ds->setParam(name,value);
     fs = dynamic_cast<EvalFunction*>(porosity);
     if (fs)
       fs->setParam(name,value);
@@ -161,6 +165,9 @@ public:
     EvalFunction* fs = dynamic_cast<EvalFunction*>(source);
     if (fs)
       fs->setParam(name,value);
+    DiracSum* ds = dynamic_cast<DiracSum*>(source);
+    if (ds)
+      ds->setParam(name,value);
     fs = dynamic_cast<EvalFunction*>(porosity);
     if (fs)
       fs->setParam(name,value);
