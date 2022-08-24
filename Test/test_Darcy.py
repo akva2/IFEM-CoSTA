@@ -29,8 +29,8 @@ def testDarcy():
     assert('secondary_y' in anasol.keys())
     np.testing.assert_allclose(anasol['secondary_y'], [0.0, -0.25, 0.0, 0.0, 0.0, -0.0, 0.0, 0.25, 0.0])
 
-def testDarcyTwoField():
-    darcy = IFEM_CoSTA.Darcy('DarcyTwoFieldSquare.xinp')
+def testDarcyTransport():
+    darcy = IFEM_CoSTA.Darcy('DarcyTransportSquare.xinp')
 
     assert(darcy.ndof == 18)
 

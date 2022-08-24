@@ -17,7 +17,7 @@
 #include "CoSTAModule.h"
 #include "Darcy.h"
 #include "DarcySolutions.h"
-#include "MixedDarcy.h"
+#include "DarcyTransport.h"
 #include "SIMDarcy.h"
 
 #include "AlgEqSystem.h"
@@ -41,7 +41,7 @@
 class DarcyPreParse : public XMLInputBase
 {
 public:
-  bool twofield = false; //!< True to use a two-field formulation
+  bool tracer = false; //!< True to include a tracer field
   int torder = 0; //!< Time integration order
 
   //! \brief Constructor.
@@ -58,26 +58,11 @@ protected:
       std::string type;
       if (utl::getAttribute(elem,"type",type))
         torder = TimeIntegration::Order(TimeIntegration::get(type));
-    } else if (!strcasecmp(elem->Value(),"darcy")) {
-      utl::getAttribute(elem,"twofield",twofield);
-      ASMmxBase::Type = ASMmxBase::NONE;
-      const char* formulation = elem->Attribute("formulation");
-      if (formulation) {
-        if (strcasecmp(formulation, "th" ) == 0 ||
-            strcasecmp(formulation, "mixed") == 0) {
-          ASMmxBase::Type = ASMmxBase::REDUCED_CONT_RAISE_BASIS2;
-          twofield = true;
-        } else if (strcasecmp(formulation,"frth") == 0 ||
-                   strcasecmp(formulation,"mixed_full") == 0) {
-          ASMmxBase::Type = ASMmxBase::FULL_CONT_RAISE_BASIS2;
-          twofield = true;
-        }
-    }
+    } else if (!strcasecmp(elem->Value(),"darcy"))
+      utl::getAttribute(elem,"tracer",tracer);
+
+    return true;
   }
-
-  return true;
-}
-
 };
 
 
@@ -141,17 +126,17 @@ public:
 
 
 /*!
- \brief Integrand for two-field Darcy with CoSTA additions.
+ \brief Integrand for Darcy transport with CoSTA additions.
 */
 
-class MixedDarcyCoSTA : public MixedDarcy
+class DarcyTransportCoSTA : public DarcyTransport
 {
 public:
   //! \brief The default constructor initializes all pointers to zero.
   //! \param[in] n Number of spatial dimensions
   //! \param[in] torder Order of time stepping scheme (BE/BDF2)
-  explicit MixedDarcyCoSTA(unsigned short int n, int torder) :
-    MixedDarcy(n, torder)
+  explicit DarcyTransportCoSTA(unsigned short int n, int torder) :
+    DarcyTransport(n, torder)
   {
   }
 
@@ -195,7 +180,7 @@ class DarcyConcentrationIntegral : public ForceBase
 public:
   //! \brief Constructor for global force resultant integration.
   //! \param[in] p The heat equation problem to evaluate fluxes for
-  explicit DarcyConcentrationIntegral(MixedDarcy& p) : ForceBase(p) {}
+  explicit DarcyConcentrationIntegral(DarcyTransport& p) : ForceBase(p) {}
 
   using ForceBase::evalInt;
   //! \brief Evaluates the integrand at a boundary point.
@@ -339,7 +324,7 @@ protected:
             utl::getAttribute(child, "set", set);
             utl::getAttribute(child, "type", type);
             if (type == "ConcentrationIntegral" && this->getProblem()->getNoFields() > 1) {
-              MixedDarcy& itg = static_cast<MixedDarcy&>(*this->myProblem);
+              DarcyTransport& itg = static_cast<DarcyTransport&>(*this->myProblem);
               qi.itg = std::make_unique<DarcyConcentrationIntegral>(itg);
               qi.code = this->getUniquePropertyCode(set);
             }
@@ -389,13 +374,9 @@ struct CoSTASIMAllocator<SIMDarcyCoSTA> {
     DarcyPreParse preparse(infile);
 
     std::vector<unsigned char> nf;
-    if (preparse.twofield) {
-      if (ASMmxBase::Type == ASMmxBase::FULL_CONT_RAISE_BASIS2 ||
-          ASMmxBase::Type == ASMmxBase::REDUCED_CONT_RAISE_BASIS2)
-        nf = {1,1};
-      else
-        nf = {2};
-      integrand = std::make_unique<MixedDarcyCoSTA>(Dim::dimension, preparse.torder);
+    if (preparse.tracer) {
+      nf = {2};
+      integrand = std::make_unique<DarcyTransportCoSTA>(Dim::dimension, preparse.torder);
     } else {
       nf = {1};
       integrand = std::make_unique<DarcyCoSTA>(Dim::dimension, preparse.torder);
