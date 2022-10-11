@@ -2,6 +2,8 @@ project(CoSTA)
 
 cmake_minimum_required(VERSION 3.0)
 
+cmake_policy(SET CMP0057 NEW)
+
 # Add local modules
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}
                       ${PROJECT_SOURCE_DIR}/../../cmake/Modules)
@@ -17,7 +19,7 @@ endif()
 
 set(CMAKE_CXX_STANDARD 17)
 
-find_package(Python3 COMPONENTS Development)
+find_package(Python3 COMPONENTS Development Interpreter)
 find_package(pybind11 REQUIRED)
 
 set(AD_DIR ${PROJECT_SOURCE_DIR}/../IFEM-AdvectionDiffusion)
