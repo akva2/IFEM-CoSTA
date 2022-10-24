@@ -102,9 +102,8 @@ public:
   //! \param value Value of parameter
   void setParam(const std::string& name, double value) override
   {
-    VecFuncExpr* f = dynamic_cast<VecFuncExpr*>(permvalues);
-    if (f)
-      f->setParam(name, value);
+    if (mat)
+      mat->setParam(name, value);
 
     EvalFunction* fs = dynamic_cast<EvalFunction*>(source);
     if (fs)
@@ -112,12 +111,6 @@ public:
     DiracSum* ds = dynamic_cast<DiracSum*>(source);
     if (ds)
       ds->setParam(name,value);
-    fs = dynamic_cast<EvalFunction*>(porosity);
-    if (fs)
-      fs->setParam(name,value);
-    fs = dynamic_cast<EvalFunction*>(dispersivity);
-    if (fs)
-      fs->setParam(name,value);
     fs = dynamic_cast<EvalFunction*>(source);
     if (fs)
       fs->setParam(name,value);
@@ -145,9 +138,8 @@ public:
   //! \param value Value of parameter
   void setParam(const std::string& name, double value) override
   {
-    VecFuncExpr* f = dynamic_cast<VecFuncExpr*>(permvalues);
-    if (f)
-      f->setParam(name, value);
+    if (mat)
+      mat->setParam(name, value);
 
     EvalFunction* fs = dynamic_cast<EvalFunction*>(source);
     if (fs)
@@ -155,12 +147,6 @@ public:
     DiracSum* ds = dynamic_cast<DiracSum*>(source);
     if (ds)
       ds->setParam(name,value);
-    fs = dynamic_cast<EvalFunction*>(porosity);
-    if (fs)
-      fs->setParam(name,value);
-    fs = dynamic_cast<EvalFunction*>(dispersivity);
-    if (fs)
-      fs->setParam(name,value);
     fs = dynamic_cast<EvalFunction*>(source);
     if (fs)
       fs->setParam(name,value);
