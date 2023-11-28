@@ -21,17 +21,15 @@
 #include "SIMDarcy.h"
 
 #include "AlgEqSystem.h"
-#include "ASMmxBase.h"
 #include "ElmMats.h"
 #include "ElmNorm.h"
 #include "ExprFunctions.h"
 #include "ForceIntegrator.h"
 #include "SIMconfigure.h"
-#include "SystemMatrix.h"
 #include "TimeIntUtils.h"
 #include "Utilities.h"
 
-#include <tinyxml.h>
+#include <tinyxml2.h>
 
 
 /*!
@@ -52,7 +50,7 @@ public:
 
 protected:
   //! \brief Parse an XML element.
-  bool parse(const TiXmlElement* elem)
+  bool parse(const tinyxml2::XMLElement* elem)
   {
     if (!strcasecmp(elem->Value(),"timestepping")) {
       std::string type;
@@ -296,13 +294,13 @@ public:
 
 protected:
   //! \brief Parses a data section from an XML element.
-  bool parse(const TiXmlElement* elem) override
+  bool parse(const tinyxml2::XMLElement* elem) override
   {
     if (!strcasecmp(elem->Value(),"darcy")) {
-      const TiXmlElement* child2 = elem->FirstChildElement();
+      const tinyxml2::XMLElement* child2 = elem->FirstChildElement();
       for (; child2; child2 = child2->NextSiblingElement())
         if (!strcasecmp(child2->Value(), "quantities_of_interest"))  {
-          const TiXmlElement* child = child2->FirstChildElement("qi");
+          const tinyxml2::XMLElement* child = child2->FirstChildElement("qi");
           for (; child; child = child->NextSiblingElement("qi")) {
             std::string name, set, type;
             QI qi;
