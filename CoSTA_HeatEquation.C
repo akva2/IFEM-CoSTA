@@ -29,7 +29,7 @@
 #include "SystemMatrix.h"
 #include "Utilities.h"
 
-#include <tinyxml.h>
+#include <tinyxml2.h>
 
 
 /*!
@@ -196,12 +196,12 @@ public:
 
   using Dim::parse;
   //! \brief Parses a data section from an XML element.
-  bool parse(const TiXmlElement* elem) override
+  bool parse(const tinyxml2::XMLElement* elem) override
   {
     if (strcasecmp(elem->Value(),"heatequation"))
       return this->Dim::parse(elem);
 
-    const TiXmlElement* child = elem->FirstChildElement();
+    const tinyxml2::XMLElement* child = elem->FirstChildElement();
     for (; child; child = child->NextSiblingElement())
       if (!strcasecmp(child->Value(),"anasol")) {
         IFEM::cout <<"\tAnalytical solution: Expression"<< std::endl;
