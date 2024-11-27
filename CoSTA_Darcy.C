@@ -103,13 +103,13 @@ public:
     if (mat)
       mat->setParam(name, value);
 
-    EvalFunction* fs = dynamic_cast<EvalFunction*>(source);
+    EvalFunction* fs = dynamic_cast<EvalFunction*>(source.get());
     if (fs)
       fs->setParam(name,value);
-    DiracSum* ds = dynamic_cast<DiracSum*>(source);
+    DiracSum* ds = dynamic_cast<DiracSum*>(source.get());
     if (ds)
       ds->setParam(name,value);
-    fs = dynamic_cast<EvalFunction*>(source);
+    fs = dynamic_cast<EvalFunction*>(source.get());
     if (fs)
       fs->setParam(name,value);
   }
@@ -139,16 +139,16 @@ public:
     if (mat)
       mat->setParam(name, value);
 
-    EvalFunction* fs = dynamic_cast<EvalFunction*>(source);
+    EvalFunction* fs = dynamic_cast<EvalFunction*>(source.get());
     if (fs)
       fs->setParam(name,value);
-    DiracSum* ds = dynamic_cast<DiracSum*>(source);
+    DiracSum* ds = dynamic_cast<DiracSum*>(source.get());
     if (ds)
       ds->setParam(name,value);
-    fs = dynamic_cast<EvalFunction*>(source);
+    fs = dynamic_cast<EvalFunction*>(source.get());
     if (fs)
       fs->setParam(name,value);
-    fs = dynamic_cast<EvalFunction*>(sourceC);
+    fs = dynamic_cast<EvalFunction*>(sourceC.get());
     if (fs)
       fs->setParam(name,value);
   }
