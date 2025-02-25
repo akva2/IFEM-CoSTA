@@ -22,11 +22,9 @@
 #include "BDF.h"
 #include "ElmMats.h"
 #include "EqualOrderOperators.h"
-#include "ExprFunctions.h"
 #include "Functions.h"
 #include "IntegrandBase.h"
 #include "SIMconfigure.h"
-#include "SystemMatrix.h"
 #include "Utilities.h"
 
 #include <tinyxml2.h>
@@ -84,12 +82,9 @@ public:
 
     double kappa = this->getDiffusivity(X);
     double rhocp = 1.0;
-
     double theta = 0.0;
-    for (int t = 1; t <= bdf.getOrder(); t++) {
-      double val = fe.N.dot(elmInt.vec[t]);
-      theta -= bdf[t]/time.dt*val;
-    }
+    for (int t = 1; t <= bdf.getOrder(); t++)
+      theta -= bdf[t]/time.dt * fe.N.dot(elmInt.vec[t]);
 
     WeakOps::Laplacian(A,fe,kappa);
     WeakOps::Mass(A,fe,rhocp*bdf[0]/time.dt);
@@ -142,17 +137,14 @@ public:
   //! \brief Set a parameter in the source and flux functions.
   //! \param name Name of parameter
   //! \param value Value of parameter
-  void setParam(const std::string& name, double value)
+  void setParam(const std::string& name, double value) override
   {
-    EvalFunction* f = dynamic_cast<EvalFunction*>(sourceTerm.get());
-    if (f)
-      f->setParam(name, value);
-    f = dynamic_cast<EvalFunction*>(flux);
-    if (f)
-      f->setParam(name, value);
-    f = dynamic_cast<EvalFunction*>(diffFunc.get());
-    if (f)
-      f->setParam(name, value);
+    if (flux)
+      flux->setParam(name, value);
+    if (sourceTerm.get())
+      sourceTerm->setParam(name, value);
+    if (diffFunc.get())
+      diffFunc->setParam(name, value);
   }
 
 protected:
@@ -346,22 +338,18 @@ public:
   {
     this->heq.setParam(name, value);
     if (this->mySol) {
-      EvalFunction* f = dynamic_cast<EvalFunction*>(this->mySol->getScalarSol());
+      RealFunc* f = this->mySol->getScalarSol();
       if (f)
         f->setParam(name, value);
-      VecFuncExpr* v = dynamic_cast<VecFuncExpr*>(this->mySol->getScalarSecSol());
+      VecFunc* v = this->mySol->getScalarSecSol();
       if (v)
         v->setParam(name, value);
-      for (auto& it : this->myScalars) {
-        f = dynamic_cast<EvalFunction*>(it.second);
-        if (f)
-          f->setParam(name, value);
-      }
-      for (auto& it : this->myScalars) {
-        v = dynamic_cast<VecFuncExpr*>(it.second);
-        if (v)
-          v->setParam(name, value);
-      }
+      for (auto& it : this->myScalars)
+        if (it.second)
+          it.second->setParam(name, value);
+      for (auto& it : this->myVectors)
+        if (it.second)
+          it.second->setParam(name, value);
     }
     if (ICf.empty() && !this->myICs.empty())
       for (const auto& it : this->myICs)
@@ -370,11 +358,9 @@ public:
             RealFunc* f = utl::parseRealFunc(ic.function,ic.file_field,false);
             ICf[ic.sim_field] = std::unique_ptr<RealFunc>(f);
           }
-    for (auto& it : ICf) {
-      EvalFunction* f = dynamic_cast<EvalFunction*>(it.second.get());
-      if (f)
-        f->setParam(name, value);
-    }
+    for (auto& it : ICf)
+      if (it.second.get())
+        it.second->setParam(name, value);
   }
 
   //! \brief Sets initial conditions.

@@ -23,7 +23,6 @@
 #include "AlgEqSystem.h"
 #include "ElmMats.h"
 #include "ElmNorm.h"
-#include "ExprFunctions.h"
 #include "ForceIntegrator.h"
 #include "SIMconfigure.h"
 #include "TimeIntUtils.h"
@@ -95,23 +94,15 @@ public:
     return true;
   }
 
-  //! \brief Set a parameter in the source and flux functions.
+  //! \brief Set a parameter in the material and source functions.
   //! \param name Name of parameter
   //! \param value Value of parameter
   void setParam(const std::string& name, double value) override
   {
     if (mat)
       mat->setParam(name, value);
-
-    EvalFunction* fs = dynamic_cast<EvalFunction*>(source.get());
-    if (fs)
-      fs->setParam(name,value);
-    DiracSum* ds = dynamic_cast<DiracSum*>(source.get());
-    if (ds)
-      ds->setParam(name,value);
-    fs = dynamic_cast<EvalFunction*>(source.get());
-    if (fs)
-      fs->setParam(name,value);
+    if (source.get())
+      source->setParam(name, value);
   }
 };
 
@@ -131,26 +122,17 @@ public:
   {
   }
 
-  //! \brief Set a parameter in the source and flux functions.
+  //! \brief Set a parameter in the material and source functions.
   //! \param name Name of parameter
   //! \param value Value of parameter
   void setParam(const std::string& name, double value) override
   {
     if (mat)
       mat->setParam(name, value);
-
-    EvalFunction* fs = dynamic_cast<EvalFunction*>(source.get());
-    if (fs)
-      fs->setParam(name,value);
-    DiracSum* ds = dynamic_cast<DiracSum*>(source.get());
-    if (ds)
-      ds->setParam(name,value);
-    fs = dynamic_cast<EvalFunction*>(source.get());
-    if (fs)
-      fs->setParam(name,value);
-    fs = dynamic_cast<EvalFunction*>(sourceC.get());
-    if (fs)
-      fs->setParam(name,value);
+    if (source.get())
+      source->setParam(name, value);
+    if (sourceC.get())
+      sourceC->setParam(name, value);
   }
 };
 
@@ -239,28 +221,22 @@ public:
   {
     this->drc.setParam(name, value);
     if (this->mySol) {
-      for (size_t i = 0; i < 2; ++i) {
-        EvalFunction* f = dynamic_cast<EvalFunction*>(this->mySol->getScalarSol(i));
-        if (f)
+      RealFunc* f;
+      for (size_t i = 0; i < 2; ++i)
+        if ((f = this->mySol->getScalarSol(i)))
           f->setParam(name, value);
-      }
 
-      for (size_t i = 0; i < 2; ++i) {
-        VecFuncExpr* v = dynamic_cast<VecFuncExpr*>(this->mySol->getScalarSecSol(0));
-        if (v)
+      VecFunc* v;
+      for (size_t i = 0; i < 2; ++i)
+        if ((v = this->mySol->getScalarSecSol(0)))
           v->setParam(name, value);
-      }
 
-      for (auto& it : this->myScalars) {
-        EvalFunction* f = dynamic_cast<EvalFunction*>(it.second);
-        if (f)
+      for (auto& it : this->myScalars)
+        if ((f = it.second))
           f->setParam(name, value);
-      }
-      for (auto& it : this->myScalars) {
-        VecFuncExpr* v = dynamic_cast<VecFuncExpr*>(it.second);
-        if (v)
+      for (auto& it : this->myVectors)
+        if ((v = it.second))
           v->setParam(name, value);
-      }
     }
   }
 
