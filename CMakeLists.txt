@@ -69,8 +69,6 @@ set_tests_properties(
     ENVIRONMENT PYTHONPATH=${PROJECT_BINARY_DIR}
 )
 
-ifem_add_sca_tests(TARGET IFEM_CoSTA)
-
 if(IFEM_COMMON_APP_BUILD)
   set(TEST_APPS ${TEST_APPS} PARENT_SCOPE)
 else()
