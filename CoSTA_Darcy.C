@@ -70,13 +70,10 @@ protected:
 class DarcyCoSTA : public Darcy
 {
 public:
-  //! \brief The default constructor initializes all pointers to zero.
+  //! \brief The constructor forwards to the parent class constructor.
   //! \param[in] n Number of spatial dimensions
-  //! \param[in] torder Order of time stepping scheme (BE/BDF2)
-  explicit DarcyCoSTA(unsigned short int n, int torder) :
-    Darcy(n, torder)
-  {
-  }
+  //! \param[in] ord Order of time stepping scheme (BE/BDF2)
+  DarcyCoSTA(unsigned short int n, int ord) : Darcy(n,ord) {}
 
   using Darcy::finalizeElement;
   //! \brief Finalizes the element quantities after the numerical integration.
@@ -114,13 +111,10 @@ public:
 class DarcyTransportCoSTA : public DarcyTransport
 {
 public:
-  //! \brief The default constructor initializes all pointers to zero.
+  //! \brief The constructor forwards to the parent class constructor.
   //! \param[in] n Number of spatial dimensions
-  //! \param[in] torder Order of time stepping scheme (BE/BDF2)
-  explicit DarcyTransportCoSTA(unsigned short int n, int torder) :
-    DarcyTransport(n, torder)
-  {
-  }
+  //! \param[in] ord Order of time stepping scheme (BE/BDF2)
+  DarcyTransportCoSTA(unsigned short int n, int ord) : DarcyTransport(n,ord) {}
 
   //! \brief Set a parameter in the material and source functions.
   //! \param name Name of parameter
@@ -152,10 +146,8 @@ public:
   //! \brief Evaluates the integrand at a boundary point.
   //! \param elmInt The local integral object to receive the contributions
   //! \param[in] fe Finite element data of current integration point
-  //! \param[in] time Parameters for nonlinear and time-dependent simulations
-  //! \param[in] X Cartesian coordinates of current integration point
   bool evalInt(LocalIntegral& elmInt, const FiniteElement& fe,
-               const TimeDomain& time, const Vec3& X) const override
+               const TimeDomain&, const Vec3&) const override
   {
     ElmNorm& elmNorm = static_cast<ElmNorm&>(elmInt);
 
@@ -172,24 +164,18 @@ public:
   using ForceBase::initElement;
   //! \brief Initializes current element for numerical integration.
   //! \param[in] MNPC Matrix of nodal point correspondance for current element
-  //! \param[in] fe Nodal and integration point data for current element
-  //! \param[in] X0 Cartesian coordinates of the element center
-  //! \param[in] nPt Number of integration points in this element
   //! \param elmInt Local integral for element
   //!
   //! \details This method is invoked once before starting the numerical
   //! integration loop over the Gaussian quadrature points over an element.
   //! It is supposed to perform all the necessary internal initializations
   //! needed before the numerical integration is started for current element.
-  //! Reimplement this method for problems requiring the element center and/or
-  //! the number of integration points during/before the integrand evaluations.
   bool initElement(const std::vector<int>& MNPC,
-                   const FiniteElement& fe,
-                   const Vec3& X0, size_t nPt,
+                   const FiniteElement&, const Vec3&, size_t,
                    LocalIntegral& elmInt) override
   {
     return myProblem.initElement(MNPC,elmInt);
-   }
+  }
 
   //! \brief This is a volume integrand.
   bool hasInteriorTerms() const override { return true; }
@@ -207,9 +193,8 @@ class SIMDarcyCoSTA : public SIMDarcy<Dim>,
 public:
   //! \brief Constructor.
   //! \param integrand Reference to integrand to use
-  //! \param nf Number of fields on each basis
-  explicit SIMDarcyCoSTA(Darcy& integrand,
-                         const std::vector<unsigned char>& nf) :
+  //! \param nf Number of fields
+  SIMDarcyCoSTA(Darcy& integrand, unsigned char nf) :
     SIMDarcy<Dim>(integrand, nf)
   {
   }
@@ -219,24 +204,23 @@ public:
   //! \param value Value of parameter
   void setParam(const std::string& name, double value)
   {
-    this->drc.setParam(name, value);
+    this->myProblem->setParam(name, value);
     if (this->mySol) {
-      RealFunc* f;
       for (size_t i = 0; i < 2; ++i)
-        if ((f = this->mySol->getScalarSol(i)))
+        if (RealFunc* f = this->mySol->getScalarSol(i); f)
           f->setParam(name, value);
 
-      VecFunc* v;
       for (size_t i = 0; i < 2; ++i)
-        if ((v = this->mySol->getScalarSecSol(0)))
+        if (VecFunc* v = this->mySol->getScalarSecSol(0); v)
           v->setParam(name, value);
 
       for (auto& it : this->myScalars)
-        if ((f = it.second))
-          f->setParam(name, value);
+        if (it.second)
+          it.second->setParam(name, value);
+
       for (auto& it : this->myVectors)
-        if ((v = it.second))
-          v->setParam(name, value);
+        if (it.second)
+          it.second->setParam(name, value);
     }
   }
 
@@ -272,12 +256,12 @@ protected:
   //! \brief Parses a data section from an XML element.
   bool parse(const tinyxml2::XMLElement* elem) override
   {
-    if (!strcasecmp(elem->Value(),"darcy")) {
-      const tinyxml2::XMLElement* child2 = elem->FirstChildElement();
-      for (; child2; child2 = child2->NextSiblingElement())
-        if (!strcasecmp(child2->Value(), "quantities_of_interest"))  {
-          const tinyxml2::XMLElement* child = child2->FirstChildElement("qi");
-          for (; child; child = child->NextSiblingElement("qi")) {
+    if (!strcasecmp(elem->Value(),"darcy"))
+      for (const tinyxml2::XMLElement* child2 = elem->FirstChildElement();
+           child2; child2 = child2->NextSiblingElement())
+        if (!strcasecmp(child2->Value(), "quantities_of_interest"))
+          for (const tinyxml2::XMLElement* child = child2->FirstChildElement("qi");
+               child; child = child->NextSiblingElement("qi")) {
             std::string name, set, type;
             QI qi;
             utl::getAttribute(child, "name", name);
@@ -294,8 +278,6 @@ protected:
                          << " set = " << set << " type = " << type << std::endl;
             }
           }
-        }
-    }
 
     return this->SIMDarcy<Dim>::parse(elem);
   }
@@ -333,15 +315,11 @@ struct CoSTASIMAllocator<SIMDarcyCoSTA> {
   {
     DarcyPreParse preparse(infile);
 
-    std::vector<unsigned char> nf;
-    if (preparse.tracer) {
-      nf = {2};
+    if (preparse.tracer)
       integrand = std::make_unique<DarcyTransportCoSTA>(Dim::dimension, preparse.torder);
-    } else {
-      nf = {1};
+    else
       integrand = std::make_unique<DarcyCoSTA>(Dim::dimension, preparse.torder);
-    }
-    newModel = std::make_unique<SIMDarcyCoSTA<Dim>>(*integrand, nf);
+    newModel = std::make_unique<SIMDarcyCoSTA<Dim>>(*integrand, preparse.tracer ? 2 : 1);
     model = newModel.get();
     solModel = newModel.get();
     if (ConfigureSIM(static_cast<SIMDarcy<Dim>&>(*newModel),
