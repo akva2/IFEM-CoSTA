@@ -35,11 +35,10 @@
       <scalarsecondary>(2*x-1)*y*(y-1)*scale | x*(x-1)*(2*y-1)*scale</scalarsecondary>
     </anasol>
     <permvalues>1.0|1.0</permvalues>
-    <porosity type="constant">phi</porosity>
-    <dispersivity type="constant">D</dispersivity>
+    <porosity type="expression">phi</porosity>
+    <dispersivity type="expression">D</dispersivity>
     <subiterations max="50" tol="1e-10"/>
     <gravity>1.0</gravity>
-
     <quantities_of_interest>
       <qi name="no_concentration_zone" set="NoZone" type="ConcentrationIntegral"/>
     </quantities_of_interest>
