@@ -79,9 +79,9 @@ endif()
 ifem_add_doc_target(
   TARGET
     CoSTA
-  EXTRA_DIRS
-    ${CommonAD_DIRECTORY}
-    ${CommonDarcy_DIRECTORY}
+  DEPENDENCIES
+    AdvectionDiffusion
+    Darcy
 )
 
 # Installation etc
