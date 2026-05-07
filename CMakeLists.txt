@@ -20,8 +20,22 @@ endif()
 find_package(Python3 COMPONENTS Development Interpreter)
 find_package(pybind11 REQUIRED)
 
-ifem_add_dependency_dir(APP AdvectionDiffusion DIR Common/AdvectionDiffusion TARGET CommonAD)
-ifem_add_dependency_dir(APP Darcy DIR Common/Darcy TARGET CommonDarcy)
+ifem_add_dependency_dir(
+  APP
+    AdvectionDiffusion
+  DIR
+    AdvectionDiffusion
+  TARGET
+    IFEM::AdvectionDiffusion
+)
+ifem_add_dependency_dir(
+  APP
+    Darcy
+  DIR
+    Common/Darcy
+  TARGET
+    CommonDarcy
+)
 
 set(LIBRARY_OUTPUT_PATH IFEM_CoSTA)
 
@@ -39,11 +53,10 @@ if(CMAKE_VERSION GREATER_EQUAL 3.23)
   )
 endif()
 
-target_link_libraries(
-  IFEM_CoSTA
+target_link_libraries(IFEM_CoSTA
   PRIVATE
     CommonDarcy
-    CommonAD
+    IFEM::AdvectionDiffusion
     pybind11::pybind11
     Python3::Python
 )
