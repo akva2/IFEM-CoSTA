@@ -32,9 +32,9 @@ ifem_add_dependency_dir(
   APP
     Darcy
   DIR
-    Common/Darcy
+    Darcy
   TARGET
-    CommonDarcy
+    IFEM::Darcy
 )
 
 set(LIBRARY_OUTPUT_PATH IFEM_CoSTA)
@@ -55,8 +55,8 @@ endif()
 
 target_link_libraries(IFEM_CoSTA
   PRIVATE
-    CommonDarcy
     IFEM::AdvectionDiffusion
+    IFEM::Darcy
     pybind11::pybind11
     Python3::Python
 )
