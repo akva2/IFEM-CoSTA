@@ -23,6 +23,7 @@
 #include "AlgEqSystem.h"
 #include "ElmMats.h"
 #include "ElmNorm.h"
+#include "FiniteElement.h"
 #include "ForceIntegrator.h"
 #include "SIMconfigure.h"
 #include "TimeIntUtils.h"

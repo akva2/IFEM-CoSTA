@@ -22,6 +22,7 @@
 #include "BDF.h"
 #include "ElmMats.h"
 #include "EqualOrderOperators.h"
+#include "FiniteElement.h"
 #include "Functions.h"
 #include "IntegrandBase.h"
 #include "SIMconfigure.h"
