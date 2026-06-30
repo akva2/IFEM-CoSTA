@@ -16,7 +16,6 @@
 
 #include "CoSTAModule.h"
 #include "Darcy.h"
-#include "DarcySolutions.h"
 #include "DarcyTransport.h"
 #include "SIMDarcy.h"
 
@@ -25,7 +24,6 @@
 #include "ElmNorm.h"
 #include "FiniteElement.h"
 #include "ForceIntegrator.h"
-#include "SIMconfigure.h"
 #include "TimeIntUtils.h"
 #include "Utilities.h"
 
@@ -33,7 +31,7 @@
 
 
 /*!
- * \brief Preparsing to check the Darcy formulation to use.
+  \brief Preparsing to check the Darcy formulation to use.
 */
 
 class DarcyPreParse : public XMLInputBase
