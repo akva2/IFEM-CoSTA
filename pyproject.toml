@@ -1,0 +1,15 @@
+[build-system]
+requires = ["scikit-build-core"]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "IFEM_CoSTA"
+version = "1.0.0"
+description = "CoSTA simulators written using IFEM"
+maintainers = [{ name = "Arne Morten Kvarving", email = "arne.morten.kvarving@sintef.no" }]
+
+[tool.scikit-build]
+build-dir = ".py-build"
+cmake.define = { IFEM_AS_SUBMODULE = "1" }
+cmake.args = ["-G", "Unix Makefiles"]
+build.tool-args = ["-j4"]

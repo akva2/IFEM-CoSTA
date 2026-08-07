@@ -4,6 +4,17 @@ project(CoSTA LANGUAGES C CXX)
 
 cmake_policy(SET CMP0057 NEW)
 
+# SKBUILD holds scikit-build-core's protocol version (e.g. "2"), not a boolean,
+# so it can't be passed as option()'s default value directly.
+if(DEFINED SKBUILD)
+  set(COSTA_BUILD_PYTHON_PACKAGE_DEFAULT ON)
+else()
+  set(COSTA_BUILD_PYTHON_PACKAGE_DEFAULT OFF)
+endif()
+option(COSTA_BUILD_PYTHON_PACKAGE
+       "Install the Python IFEM_CoSTA package layout (for building wheels via pip)"
+       ${COSTA_BUILD_PYTHON_PACKAGE_DEFAULT})
+
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 if(NOT TARGET IFEM)
@@ -38,6 +49,9 @@ ifem_add_dependency_dir(
 )
 
 set(LIBRARY_OUTPUT_PATH IFEM_CoSTA)
+
+file(COPY ${PROJECT_SOURCE_DIR}/IFEM_CoSTA/__init__.py
+     DESTINATION ${PROJECT_BINARY_DIR}/IFEM_CoSTA)
 
 pybind11_add_module(IFEM_CoSTA IFEM_CoSTA.C)
 target_sources(IFEM_CoSTA PRIVATE
@@ -98,9 +112,9 @@ ifem_add_doc_target(
 )
 
 # Installation etc
-file(WRITE ${PROJECT_BINARY_DIR}/IFEM_CoSTA/__init__.py
-     "from IFEM_CoSTA.IFEM_CoSTA import *\n")
-file(GENERATE OUTPUT ${PROJECT_BINARY_DIR}/setup.py
-     INPUT ${PROJECT_SOURCE_DIR}/setup.py.in)
-
-install(CODE "message(\"Please use pip to install the package from build directory\")")
+if(COSTA_BUILD_PYTHON_PACKAGE)
+  install(TARGETS IFEM_CoSTA DESTINATION IFEM_CoSTA)
+  install(FILES ${PROJECT_SOURCE_DIR}/IFEM_CoSTA/__init__.py DESTINATION IFEM_CoSTA)
+else()
+  install(CODE "message(\"Configure with -DCOSTA_BUILD_PYTHON_PACKAGE=ON, or use pip (see pyproject.toml), to install the Python package.\")")
+endif()
