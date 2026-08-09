@@ -1,8 +1,13 @@
 import IFEM_CoSTA
 import numpy as np
 
+from pathlib import Path
+
+def relative_path(filename: str) -> str:
+    return str(Path(__file__).parent / filename)
+
 def testHeatEquation():
-    heat = IFEM_CoSTA.HeatEquation('Square-heat.xinp')
+    heat = IFEM_CoSTA.HeatEquation(relative_path('Square-heat.xinp'))
     assert(heat.ndof == 16)
 
     mu = {'dt' : 1.0,
