@@ -1,8 +1,13 @@
 import IFEM_CoSTA
 import numpy as np
 
+from pathlib import Path
+
+def relative_path(filename: str) -> str:
+    return str(Path(__file__).parent / filename)
+
 def testDarcy():
-    darcy = IFEM_CoSTA.Darcy('DarcySquare.xinp')
+    darcy = IFEM_CoSTA.Darcy(relative_path('DarcySquare.xinp'))
 
     assert(darcy.ndof == 9)
 
@@ -30,7 +35,7 @@ def testDarcy():
     np.testing.assert_allclose(anasol['secondary_y'], [0.0, -0.25, 0.0, 0.0, 0.0, -0.0, 0.0, 0.25, 0.0])
 
 def testDarcyTransport():
-    darcy = IFEM_CoSTA.Darcy('DarcyTransportSquare.xinp')
+    darcy = IFEM_CoSTA.Darcy(relative_path('DarcyTransportSquare.xinp'))
 
     assert(darcy.ndof == 18)
 

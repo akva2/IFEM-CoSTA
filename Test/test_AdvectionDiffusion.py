@@ -1,8 +1,13 @@
 import IFEM_CoSTA
 import numpy as np
 
+from pathlib import Path
+
+def relative_path(filename: str) -> str:
+    return str(Path(__file__).parent / filename)
+
 def testAdvectionDiffusion():
-    ad = IFEM_CoSTA.AdvectionDiffusion('Square-abd1-ad.xinp')
+    ad = IFEM_CoSTA.AdvectionDiffusion(relative_path('Square-abd1-ad.xinp'))
     assert(ad.ndof == 9)
 
     mu = {'dt' : 1.0}
