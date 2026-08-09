@@ -50,7 +50,7 @@ ifem_add_dependency_dir(
 
 set(LIBRARY_OUTPUT_PATH IFEM_CoSTA)
 
-file(COPY ${PROJECT_SOURCE_DIR}/IFEM_CoSTA/__init__.py
+file(COPY ${PROJECT_SOURCE_DIR}/src/IFEM_CoSTA/__init__.py
      DESTINATION ${PROJECT_BINARY_DIR}/IFEM_CoSTA)
 
 pybind11_add_module(IFEM_CoSTA IFEM_CoSTA.C)
@@ -114,7 +114,7 @@ ifem_add_doc_target(
 # Installation etc
 if(COSTA_BUILD_PYTHON_PACKAGE)
   install(TARGETS IFEM_CoSTA DESTINATION IFEM_CoSTA)
-  install(FILES ${PROJECT_SOURCE_DIR}/IFEM_CoSTA/__init__.py DESTINATION IFEM_CoSTA)
+  install(FILES ${PROJECT_SOURCE_DIR}/src/IFEM_CoSTA/__init__.py DESTINATION IFEM_CoSTA)
 else()
   install(CODE "message(\"Configure with -DCOSTA_BUILD_PYTHON_PACKAGE=ON, or use pip (see pyproject.toml), to install the Python package.\")")
 endif()
