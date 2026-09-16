@@ -33,3 +33,11 @@ def testHeatEquation():
     np.testing.assert_allclose(anasol['secondary_x'], [0.0, 0.0, 0.0, 0.0, 0.2103677462019741, 0.10518387310098705, -0.10518387310098705, -0.2103677462019741, 0.21036774620197413, 0.10518387310098706, -0.10518387310098706, -0.21036774620197413, 0.0, 0.0, 0.0, 0.0])
     assert('secondary_y' in anasol.keys())
     np.testing.assert_allclose(anasol['secondary_y'], [0.0, 0.2103677462019741, 0.21036774620197413, 0.0, 0.0, 0.10518387310098705, 0.10518387310098706, 0.0, 0.0, -0.10518387310098706, -0.10518387310098708, 0.0, 0.0, -0.2103677462019741, -0.21036774620197413, 0.0])
+
+def testHeatEquationRoundtrip(costa_roundtrip):
+    heat = IFEM_CoSTA.HeatEquation(relative_path('Square-heat.xinp'))
+
+    mu = {'dt' : 1.0,
+          'alpha' : 1.0}
+
+    costa_roundtrip(heat, mu, seed=2029)

@@ -58,3 +58,18 @@ def testDarcyTransport():
     np.testing.assert_array_equal(dofs, [1,2,3,4,5,6,7,8,11,12,13,14,15,16,17,18])
     qi = darcy.qi(mu, ucorr, 'no_concentration_zone')
     np.testing.assert_allclose(qi, [0.01873860182343269])
+
+def testDarcyRoundtrip(costa_roundtrip):
+    darcy = IFEM_CoSTA.Darcy(relative_path('DarcySquare.xinp'))
+
+    costa_roundtrip(darcy, {'dt' : 1.0}, seed=2026)
+
+def testDarcyTransportRoundtrip(costa_roundtrip):
+    darcy = IFEM_CoSTA.Darcy(relative_path('DarcyTransportSquare.xinp'))
+
+    mu = {'dt' : 1.0,
+          'scale' : 1.0,
+          'phi': 1.0,
+          'D': 1.0}
+
+    costa_roundtrip(darcy, mu, seed=2027)
