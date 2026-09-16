@@ -188,6 +188,12 @@ public:
   //! \param mu Model parameters
   //! \param uprev State to make a time-step from
   //! \param unext State to calculate residual for
+  //!
+  //! \details The integrands assemble the linear residual b - A*unext in
+  //! RHS_ONLY mode. CoSTA needs the additive right-hand-side correction
+  //! A*unext - b instead, i.e. the quantity sigma for which solving with the
+  //! right-hand-side b + sigma reproduces \a unext, so the assembled load
+  //! vector is negated here.
   RealArray residual(const ParameterMap& mu,
                      const RealArray& uprev, const RealArray& unext)
   {
@@ -206,6 +212,7 @@ public:
 
     Vector loadVec;
     model->extractLoadVec(loadVec);
+    loadVec *= -1.0;
     return std::move(loadVec);
   }
 

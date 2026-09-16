@@ -43,12 +43,14 @@ public:
   //! \details This method is invoked once for each element, after the numerical
   //! integration loop over interior points is finished and before the resulting
   //! element quantities are assembled into their system level equivalents.
-  //! It is used here to calculate the linear residual if requested.
+  //! It is used here to calculate the linear residual, b := b - A*u,
+  //! if requested. Note that CoSTAModule::residual() negates this to
+  //! obtain the additive right-hand-side correction used by CoSTA.
   bool finalizeElement(LocalIntegral& elmInt) override
   {
     if (m_mode == SIM::RHS_ONLY) {
       ElmMats& A = static_cast<ElmMats&>(elmInt);
-      A.A[0].multiply(A.vec[0], A.b[0], 1.0, -1.0);
+      A.A[0].multiply(A.vec[0], A.b[0], -1.0, 1.0);
     }
 
     return true;
