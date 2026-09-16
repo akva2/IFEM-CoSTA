@@ -32,3 +32,8 @@ def testAdvectionDiffusion():
     np.testing.assert_allclose(anasol['secondary_x'], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -0.0, 0.0])
     assert('secondary_y' in anasol.keys())
     np.testing.assert_allclose(anasol['secondary_y'], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -0.0, 0.0])
+
+def testAdvectionDiffusionRoundtrip(costa_roundtrip):
+    ad = IFEM_CoSTA.AdvectionDiffusion(relative_path('Square-abd1-ad.xinp'))
+
+    costa_roundtrip(ad, {'dt' : 1.0}, seed=2028)
