@@ -300,7 +300,7 @@ public:
   //! \brief Performs some pre-processing tasks on the FE model.
   //! \details This method is reimplemented to couple the weak Dirichlet
   //! integrand to the Robin property codes.
-  void preprocessA() override
+  bool preprocessA() override
   {
     Dim::myInts.insert(std::make_pair(0,Dim::myProblem));
 
@@ -332,6 +332,8 @@ public:
         else
           p.pcode = Property::UNDEFINED;
       }
+
+    return true;
   }
 
   //! \brief Set a parameter in relevant functions.
