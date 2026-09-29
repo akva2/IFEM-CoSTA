@@ -3,7 +3,7 @@
 <simulation>
 
   <geometry dim="2" sets="true">
-    <refine type="uniform" patch="1" u="1" v="1"/>
+    <refine patch="1" u="1" v="1"/>
     <topologysets>
       <set name="NoZone" type="face">
         <item patch="1"/>
@@ -11,10 +11,12 @@
     </topologysets>
   </geometry>
 
+  <boundaryconditions>
+    <dirichlet set="Boundary" comp="12"/>
+  </boundaryconditions>
+
   <darcy tracer="true">
-    <boundaryconditions>
-      <dirichlet set="Boundary" comp="12"/>
-    </boundaryconditions>
+    <gravity>1.0</gravity>
     <source type="expression">
         -2*scale*(x-1)*x-2*(y-1)*y
     </source>
@@ -34,11 +36,9 @@
       <scalarprimary>x*(x-1)*y*(y-1)*scale</scalarprimary>
       <scalarsecondary>(2*x-1)*y*(y-1)*scale | x*(x-1)*(2*y-1)*scale</scalarsecondary>
     </anasol>
-    <permvalues>1.0|1.0</permvalues>
     <porosity type="expression">phi</porosity>
     <dispersivity type="expression">D</dispersivity>
     <subiterations max="50" tol="1e-10"/>
-    <gravity>1.0</gravity>
     <quantities_of_interest>
       <qi name="no_concentration_zone" set="NoZone" type="ConcentrationIntegral"/>
     </quantities_of_interest>
