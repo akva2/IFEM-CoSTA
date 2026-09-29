@@ -140,8 +140,8 @@ class DarcyConcentrationIntegral : public ForceBase
 {
 public:
   //! \brief Constructor for global force resultant integration.
-  //! \param[in] p The heat equation problem to evaluate fluxes for
-  explicit DarcyConcentrationIntegral(DarcyTransport& p) : ForceBase(p) {}
+  //! \param[in] dp The Darcy problem to evaluate concentration integral for
+  explicit DarcyConcentrationIntegral(DarcyTransport& dp) : ForceBase(dp) {}
 
   using ForceBase::evalInt;
   //! \brief Evaluates the integrand at a boundary point.
@@ -171,7 +171,7 @@ public:
   //! integration loop over the Gaussian quadrature points over an element.
   //! It is supposed to perform all the necessary internal initializations
   //! needed before the numerical integration is started for current element.
-  bool initElement(const std::vector<int>& MNPC,
+  bool initElement(const IntVec& MNPC,
                    const FiniteElement&, const Vec3&, size_t,
                    LocalIntegral& elmInt) override
   {
@@ -188,38 +188,34 @@ public:
 */
 
 template<class Dim>
-class SIMDarcyCoSTA : public SIMDarcy<Dim>,
-                      public CoSTASIMHelper
+class SIMDarcyCoSTA : public SIMDarcy<Dim>, public CoSTASIMHelper
 {
 public:
   //! \brief Constructor.
-  //! \param integrand Reference to integrand to use
+  //! \param dp Reference to integrand to use
   //! \param nf Number of fields
-  SIMDarcyCoSTA(Darcy& integrand, unsigned char nf) :
-    SIMDarcy<Dim>(integrand, nf)
-  {
-  }
+  SIMDarcyCoSTA(Darcy& dp, unsigned char nf) : SIMDarcy<Dim>(dp,nf) {}
 
   //! \brief Set a parameter in the functions.
   //! \param name Name of parameter
   //! \param value Value of parameter
   void setParam(const std::string& name, double value)
   {
-    this->myProblem->setParam(name, value);
-    if (this->mySol) {
+    Dim::myProblem->setParam(name, value);
+    if (Dim::mySol) {
       for (size_t i = 0; i < 2; ++i)
-        if (RealFunc* f = this->mySol->getScalarSol(i); f)
+        if (RealFunc* f = Dim::mySol->getScalarSol(i); f)
           f->setParam(name, value);
 
       for (size_t i = 0; i < 2; ++i)
-        if (VecFunc* v = this->mySol->getScalarSecSol(0); v)
+        if (VecFunc* v = Dim::mySol->getScalarSecSol(0); v)
           v->setParam(name, value);
 
-      for (auto& it : this->myScalars)
+      for (auto& it : Dim::myScalars)
         if (it.second)
           it.second->setParam(name, value);
 
-      for (auto& it : this->myVectors)
+      for (auto& it : Dim::myVectors)
         if (it.second)
           it.second->setParam(name, value);
     }
@@ -227,27 +223,24 @@ public:
 
   //! \brief Returns analytical solutions projected on primary basis.
   //! \param t Time to evaluate at
-  std::map<std::string, std::vector<double>> getAnaSols(double t)
+  std::map<std::string,RealArray> getAnaSols(double t)
   {
-    return this->CoSTASIMHelper::getAsolScalar(t, this->mySol, this);
+    return this->CoSTASIMHelper::getAsolScalar(t, Dim::mySol, this);
   }
 
   //! \brief Returns a quantity of interest.
   //! \param[in] u Solution vector to evaluate for
-  //! \param[in] time Parameters for nonlinear and time-dependent simulations
-  //! \param[in] qi Name of QI
+  //! \param[in] time Parameters for time-dependent simulations
+  //! \param[in] qi Name of the quantity of interest to return
   RealArray getQI(const RealArray& u,
                   const TimeDomain& time,
                   const std::string& qi)
   {
-    Vector integral;
+    RealArray integral;
     const auto it = myQI.find(qi);
     if (it != myQI.end()) {
-      Vectors solution(1);
-      solution[0].resize(u.size());
-      std::copy(u.begin(), u.end(), solution[0].begin());
       it->second.itg->initBuffer(this->getNoElms());
-      SIM::integrate(solution, this, it->second.code, time, it->second.itg.get());
+      SIM::integrate({u}, this, it->second.code, time, it->second.itg.get());
       it->second.itg->assemble(integral);
     }
     return integral;
@@ -257,45 +250,45 @@ protected:
   //! \brief Parses a data section from an XML element.
   bool parse(const tinyxml2::XMLElement* elem) override
   {
-    if (!strcasecmp(elem->Value(),"darcy"))
-      for (const tinyxml2::XMLElement* child2 = elem->FirstChildElement();
-           child2; child2 = child2->NextSiblingElement())
-        if (!strcasecmp(child2->Value(), "quantities_of_interest"))
-          for (const tinyxml2::XMLElement* child = child2->FirstChildElement("qi");
-               child; child = child->NextSiblingElement("qi")) {
-            std::string name, set, type;
-            QI qi;
-            utl::getAttribute(child, "name", name);
-            utl::getAttribute(child, "set", set);
-            utl::getAttribute(child, "type", type);
-            if (type == "ConcentrationIntegral" && this->getProblem()->getNoFields() > 1) {
-              DarcyTransport& itg = static_cast<DarcyTransport&>(*this->myProblem);
-              qi.itg = std::make_unique<DarcyConcentrationIntegral>(itg);
-              qi.code = this->getUniquePropertyCode(set);
-            }
-            if (!name.empty() && !set.empty() && qi.itg) {
-              myQI.emplace(std::make_pair(name, std::move(qi)));
+    if (strcasecmp(elem->Value(),"darcy"))
+      return this->Dim::parse(elem);
+
+    const char* qoi = "quantities_of_interest";
+    for (const tinyxml2::XMLElement* child2 = elem->FirstChildElement(qoi);
+         child2; child2 = child2->NextSiblingElement(qoi))
+      for (const tinyxml2::XMLElement* child = child2->FirstChildElement("qi");
+           child; child = child->NextSiblingElement("qi")) {
+        std::string name, set, type;
+        if (utl::getAttribute(child,"name",name) && !name.empty())
+          if (utl::getAttribute(child,"set",set) && !set.empty())
+            if (utl::getAttribute(child,"type",type) &&
+                type == "ConcentrationIntegral") {
+              DarcyTransport& itg = static_cast<DarcyTransport&>(*Dim::myProblem);
+              QI qi {
+                std::make_unique<DarcyConcentrationIntegral>(itg),
+                this->getUniquePropertyCode(set)
+              };
+              myQI.emplace(name, std::move(qi));
               IFEM::cout << "Quantity of interest: name = " << name
                          << " set = " << set << " type = " << type << std::endl;
             }
-          }
+      }
 
     return this->SIMDarcy<Dim>::parse(elem);
   }
 
   //! \brief Assembles problem-dependent discrete terms, if any.
-  bool assembleDiscreteTerms(const IntegrandBase*,
-                             const TimeDomain&) override
+  bool assembleDiscreteTerms(const IntegrandBase*, const TimeDomain&) override
   {
-    return this->assembleDiscreteLoad(this->getNoDOFs(),
-                                      this->mySam,
-                                      this->myEqSys->getVector(0));
+    return this->assembleDiscreteLoad(this->getNoDOFs(), Dim::mySam,
+                                      Dim::myEqSys->getVector(0));
   }
 
+private:
   //! \brief Struct describing a quantity of interest.
   struct QI {
     std::unique_ptr<ForceBase> itg; //!< Integrand to use for evaluation
-    int code; //!< Property code
+    int code = 0; //!< Property code
   };
 
   std::map<std::string, QI> myQI; //!< Map of quantities of interest
@@ -305,11 +298,11 @@ protected:
 //! \brief Specialization for SIMDarcy.
 template<>
 struct CoSTASIMAllocator<SIMDarcyCoSTA> {
-  //! \brief Method to allocate a given dimensionality of a SIMHeatEq.
-  //! \param newModel Simulator to allocate
-  //! \param model Pointer to SIMbase interface for simulator
-  //! \param solModel Pointer to SIMsolution interface for simulator
-  //! \param infile Input file to parse.
+  //! \brief Allocates a Darcy simulator for given dimensionality.
+  //! \param[out] newModel Allocated SIMDarcy instance
+  //! \param[out] model Pointer to SIMbase interface for \a newModel
+  //! \param[out] solModel Pointer to SIMsolution interface for \a newModel
+  //! \param[in] infile Input file to parse model description from
   template<class Dim>
   void allocate(std::unique_ptr<SIMDarcyCoSTA<Dim>>& newModel, SIMbase*& model,
                 SIMsolution*& solModel, const std::string& infile)
@@ -321,11 +314,14 @@ struct CoSTASIMAllocator<SIMDarcyCoSTA> {
     else
       integrand = std::make_unique<DarcyCoSTA>(Dim::dimension, preparse.torder);
     newModel = std::make_unique<SIMDarcyCoSTA<Dim>>(*integrand, preparse.tracer ? 2 : 1);
+    if (!newModel->read(infile.c_str()))
+      throw std::runtime_error("Error reading input file");
+    if (!newModel->preprocess())
+      throw std::runtime_error("Error preprocessing the model");
+    if (!newModel->init())
+      throw std::runtime_error("Error initializing the model");
     model = newModel.get();
     solModel = newModel.get();
-    if (ConfigureSIM(static_cast<SIMDarcy<Dim>&>(*newModel),
-                     const_cast<char*>(infile.c_str())))
-      throw std::runtime_error("Error reading input file");
   }
 
   std::unique_ptr<Darcy> integrand; //!< Pointer to integrand instance
