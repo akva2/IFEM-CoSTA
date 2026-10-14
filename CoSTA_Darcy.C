@@ -194,7 +194,7 @@ public:
   //! \brief Constructor.
   //! \param dp Reference to integrand to use
   //! \param nf Number of fields
-  SIMDarcyCoSTA(Darcy& dp, unsigned char nf) : SIMDarcy<Dim>(dp,nf) {}
+  SIMDarcyCoSTA(Darcy* dp, unsigned char nf) : SIMDarcy<Dim>(dp,nf) {}
 
   //! \brief Set a parameter in the functions.
   //! \param name Name of parameter
@@ -307,13 +307,14 @@ struct CoSTASIMAllocator<SIMDarcyCoSTA> {
   void allocate(std::unique_ptr<SIMDarcyCoSTA<Dim>>& newModel, SIMbase*& model,
                 SIMsolution*& solModel, const std::string& infile)
   {
-    DarcyPreParse preparse(infile);
-
-    if (preparse.tracer)
-      integrand = std::make_unique<DarcyTransportCoSTA>(Dim::dimension, preparse.torder);
+    DarcyPreParse prep(infile);
+    Darcy* itg;
+    if (prep.tracer)
+      itg = new DarcyTransportCoSTA(Dim::dimension,prep.torder);
     else
-      integrand = std::make_unique<DarcyCoSTA>(Dim::dimension, preparse.torder);
-    newModel = std::make_unique<SIMDarcyCoSTA<Dim>>(*integrand, preparse.tracer ? 2 : 1);
+      itg = new DarcyCoSTA(Dim::dimension,prep.torder);
+
+    newModel = std::make_unique<SIMDarcyCoSTA<Dim>>(itg, prep.tracer ? 2 : 1);
     if (!newModel->read(infile.c_str()))
       throw std::runtime_error("Error reading input file");
     if (!newModel->preprocess())
@@ -323,8 +324,6 @@ struct CoSTASIMAllocator<SIMDarcyCoSTA> {
     model = newModel.get();
     solModel = newModel.get();
   }
-
-  std::unique_ptr<Darcy> integrand; //!< Pointer to integrand instance
 };
 
 
