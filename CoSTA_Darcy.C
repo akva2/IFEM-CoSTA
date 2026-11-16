@@ -38,24 +38,23 @@ class DarcyPreParse : public XMLInputBase
 {
 public:
   bool tracer = false; //!< True to include a tracer field
-  int torder = 0; //!< Time integration order
+  int  torder = 0;     //!< Time integration order
 
-  //! \brief Constructor.
-  DarcyPreParse(const std::string& file)
+  //! \brief The constructor parses the specified XML input file.
+  explicit DarcyPreParse(const std::string& file)
   {
-    this->readXML(file.c_str(), false);
+    this->readXML(file.c_str(),false);
   }
 
 protected:
-  //! \brief Parse an XML element.
-  bool parse(const tinyxml2::XMLElement* elem)
+  //! \brief Parse a data section from an XML element.
+  bool parse(const tinyxml2::XMLElement* elem) override
   {
-    if (!strcasecmp(elem->Value(),"timestepping")) {
-      std::string type;
-      if (utl::getAttribute(elem,"type",type))
-        torder = TimeIntegration::Order(TimeIntegration::get(type));
-    } else if (!strcasecmp(elem->Value(),"darcy"))
+    if (!strcasecmp(elem->Value(),"darcy"))
       utl::getAttribute(elem,"tracer",tracer);
+    else if (!strcasecmp(elem->Value(),"timestepping"))
+      if (std::string type; utl::getAttribute(elem,"type",type))
+        torder = TimeIntegration::Order(TimeIntegration::get(type));
 
     return true;
   }
@@ -66,13 +65,13 @@ protected:
  \brief Integrand for Darcy with CoSTA additions.
 */
 
-class DarcyCoSTA : public Darcy
+class DarcyCoSTA : public DarcyTransient
 {
 public:
   //! \brief The constructor forwards to the parent class constructor.
   //! \param[in] n Number of spatial dimensions
   //! \param[in] ord Order of time stepping scheme (BE/BDF2)
-  DarcyCoSTA(unsigned short int n, int ord) : Darcy(n,ord) {}
+  DarcyCoSTA(unsigned short int n, int ord) : DarcyTransient(n,ord) {}
 
   using Darcy::finalizeElement;
   //! \brief Finalizes the element quantities after the numerical integration.
@@ -133,7 +132,7 @@ public:
 
 
 /*!
-  \brief Class representing the integrand for computing the integral of the concentration.
+  \brief Class representing the integrand of the concentration integral.
 */
 
 class DarcyConcentrationIntegral : public ForceBase
